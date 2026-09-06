@@ -1,16 +1,17 @@
 <script lang="ts">
-	import { mockUser, mockModules } from '$lib/mock/data';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import Plus from '@lucide/svelte/icons/plus';
 
-	const isSuperAdmin = mockUser.role === 'super_admin';
+    // 1. Accept the data prop from the +page.server.ts load function
+	let { data } = $props();
 
-	const assignedModuleIds = isSuperAdmin
-		? mockModules.map((m) => m.id)
-		: [1];
-
-	const visibleModules = mockModules.filter((m) => assignedModuleIds.includes(m.id));
+    // 2. Use the REAL modules from Supabase instead of mock data
+	let visibleModules = $derived(data.modules ?? []);
+	
+    // 3. Keep your global dev role logic
+	let role = $derived(data.user?.role ?? 'admin');
+	let isSuperAdmin = $derived(role === 'super_admin');
 </script>
 
 <svelte:head>
@@ -42,13 +43,17 @@
 			<a href="/modules/{mod.id}" class="group overflow-hidden rounded-lg border transition hover:shadow-md">
 				<div class="relative h-32">
 					<img
-						src={mod.coverImage}
+						src={mod.cover_image && !mod.cover_image.startsWith('data:')
+							? mod.cover_image
+							: 'https://placehold.co/800x300?text=No+Image'}
 						alt={mod.name}
 						class="h-full w-full object-cover transition group-hover:scale-105"
 					/>
-					<div class="absolute inset-0 bg-black/30" />
+					<div class="absolute inset-0 bg-black/30" ></div>
 					<img
-						src={mod.iconImage}
+						src={mod.icon_image && !mod.icon_image.startsWith('data:')
+							? mod.icon_image
+							: 'https://placehold.co/100?text=?'}
 						alt=""
 						class="absolute bottom-3 left-3 size-10 rounded-lg border-2 border-white object-cover shadow"
 					/>
@@ -57,7 +62,7 @@
 					<div class="flex items-start justify-between gap-2">
 						<p class="font-semibold">{mod.name}</p>
 						<Badge variant="secondary" class="shrink-0 text-xs">
-							{mod.eventCount} {mod.eventCount === 1 ? 'event' : 'events'}
+							Manage
 						</Badge>
 					</div>
 					{#if mod.description}

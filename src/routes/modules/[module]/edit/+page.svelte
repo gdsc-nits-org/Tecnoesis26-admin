@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { mockEvents } from '$lib/mock/data';
+	import { enhance } from '$app/forms';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
@@ -10,55 +10,65 @@
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 	import Upload from '@lucide/svelte/icons/upload';
 	import Trash2 from '@lucide/svelte/icons/trash-2';
-	import FileText from '@lucide/svelte/icons/file-text';
 
-	const moduleId = Number($page.params.module);
-	const eventId = Number($page.url.searchParams.get('eventId'));
-	let event = $state(mockEvents.find((e) => e.id === eventId) ?? mockEvents[0]);
+	let { data, form } = $props();
 
-	let name = $state(event.name);
-	let description = $state(event.description);
-	let venue = $state(event.venue);
-	let minTeamSize = $state(event.minTeamSize);
-	let maxTeamSize = $state(event.maxTeamSize);
-	let prizeDescription = $state(event.prizeDescription);
-	let stagesDescription = $state(event.stagesDescription);
-	let registrationEndTime = $state(event.registrationEndTime);
+	let event = $derived(data.event);
+	let moduleId = $derived($page.params.module);
+	let eventId = $derived($page.url.searchParams.get('eventId') ?? '');
+
 	let activeTab = $state('details');
-
-	function handleSaveDetails() {
-		console.log('saving details...', { name, description, venue });
-	}
-
-	function handleImageChange(type: 'banner' | 'poster') {
-		console.log('change image:', type);
-	}
-
-	function handleImageDelete(type: 'banner' | 'poster') {
-		console.log('delete image:', type);
-	}
-
-	function handleDocUpload() {
-		console.log('upload PDF');
-	}
-
-	function handleDocDelete(docName: string) {
-		console.log('delete doc:', docName);
-	}
+	let saving = $state(false);
+	let uploadingImage = $state(false);
 </script>
 
 <svelte:head>
 	<title>Edit {event.name} — Tecnoesis Admin</title>
 </svelte:head>
 
-<div class="mb-6">
-	<Button href="/modules/{moduleId}" variant="ghost" size="sm" class="mb-4 gap-1 pl-0">
-		<ChevronLeft class="size-4" />
-		Back to Module
-	</Button>
-	<h1 class="text-2xl font-bold">{event.name}</h1>
-	<p class="text-muted-foreground text-sm">Edit event details, images and documents.</p>
+<div class="mb-6 flex items-start justify-between">
+	<div>
+		<Button href="/modules/{moduleId}" variant="ghost" size="sm" class="mb-4 gap-1 pl-0">
+			<ChevronLeft class="size-4" />
+			Back to Module
+		</Button>
+		<h1 class="text-2xl font-bold">{event.name}</h1>
+		<p class="text-muted-foreground mt-1 text-sm">Edit event details, images and documents.</p>
+	</div>
+
+	<!-- DELETE FORM — eventId as hidden field -->
+	<form
+		method="POST"
+		action="?/deleteEvent"
+		use:enhance
+	>
+		<input type="hidden" name="eventId" value={eventId} />
+		<Button
+			type="submit"
+			variant="destructive"
+			size="sm"
+			class="gap-1.5"
+			onclick={(e) => {
+				if (!confirm('Are you sure you want to delete this event?')) e.preventDefault();
+			}}
+		>
+			<Trash2 class="size-3.5" />
+			Delete Event
+		</Button>
+	</form>
 </div>
+
+{#if form?.error}
+	<div class="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+		{form.error}
+	</div>
+{/if}
+
+{#if form?.success}
+	<div class="mb-4 rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-700">
+		Saved successfully.
+	</div>
+{/if}
 
 <Tabs bind:value={activeTab}>
 	<TabsList class="mb-6">
@@ -67,116 +77,156 @@
 		<TabsTrigger value="documents">Documents</TabsTrigger>
 	</TabsList>
 
-	<!-- DETAILS -->
+	<!-- DETAILS TAB -->
 	<TabsContent value="details">
-		<div class="max-w-2xl space-y-5">
+		<form
+			method="POST"
+			action="?/updateDetails"
+			class="max-w-2xl space-y-5"
+			use:enhance={() => {
+				saving = true;
+				return async ({ update }) => {
+					await update();
+					saving = false;
+				};
+			}}
+		>
+			<!-- eventId hidden field — this is the fix -->
+			<input type="hidden" name="eventId" value={eventId} />
+
 			<div class="space-y-1.5">
 				<Label for="name">Event Name</Label>
-				<Input id="name" bind:value={name} />
+				<Input id="name" name="name" value={event.name} />
 			</div>
 			<div class="space-y-1.5">
 				<Label for="description">Description</Label>
-				<Textarea id="description" bind:value={description} rows={4} />
+				<Textarea id="description" name="description" value={event.description} rows={4} />
 			</div>
 			<div class="space-y-1.5">
 				<Label for="venue">Venue</Label>
-				<Input id="venue" bind:value={venue} />
+				<Input id="venue" name="venue" value={event.venue} />
 			</div>
 			<div class="grid grid-cols-2 gap-4">
 				<div class="space-y-1.5">
-					<Label for="min">Min Team Size</Label>
-					<Input id="min" type="number" bind:value={minTeamSize} min={1} />
+					<Label for="minTeamSize">Min Team Size</Label>
+					<Input id="minTeamSize" name="minTeamSize" type="number" value={event.min_team_size} min={1} />
 				</div>
 				<div class="space-y-1.5">
-					<Label for="max">Max Team Size</Label>
-					<Input id="max" type="number" bind:value={maxTeamSize} min={1} />
+					<Label for="maxTeamSize">Max Team Size</Label>
+					<Input id="maxTeamSize" name="maxTeamSize" type="number" value={event.max_team_size} min={1} />
 				</div>
 			</div>
 			<div class="space-y-1.5">
-				<Label for="reg-end">Registration Close Date</Label>
-				<Input id="reg-end" type="date" bind:value={registrationEndTime} />
+				<Label for="registrationEndTime">Registration Close Date</Label>
+				<Input id="registrationEndTime" name="registrationEndTime" type="date" value={event.registration_end_time?.split('T')[0]} />
 			</div>
 			<div class="space-y-1.5">
-				<Label for="prize">Prize Description</Label>
-				<Textarea id="prize" bind:value={prizeDescription} rows={2} />
+				<Label for="prizeDescription">Prize Description</Label>
+				<Textarea id="prizeDescription" name="prizeDescription" value={event.prize_description} rows={2} />
 			</div>
 			<div class="space-y-1.5">
-				<Label for="stages">Stages Description</Label>
-				<Textarea id="stages" bind:value={stagesDescription} rows={3} />
+				<Label for="stagesDescription">Stages Description</Label>
+				<Textarea id="stagesDescription" name="stagesDescription" value={event.stages_description} rows={3} />
 			</div>
 			<Separator />
-			<Button onclick={handleSaveDetails}>Save Changes</Button>
-		</div>
+			<Button type="submit" disabled={saving}>
+				{saving ? 'Saving...' : 'Save Changes'}
+			</Button>
+		</form>
 	</TabsContent>
 
-	<!-- IMAGES -->
+	<!-- IMAGES TAB -->
 	<TabsContent value="images">
 		<div class="max-w-3xl space-y-8">
-			<div>
+
+			<!-- Banner -->
+			<form
+				method="POST"
+				action="?/updateImage"
+				enctype="multipart/form-data"
+				use:enhance={() => {
+					uploadingImage = true;
+					return async ({ update }) => {
+						await update();
+						uploadingImage = false;
+					};
+				}}
+			>
+				<!-- eventId hidden field — this is the fix -->
+				<input type="hidden" name="eventId" value={eventId} />
+				<input type="hidden" name="imageType" value="banner" />
+
 				<p class="mb-3 font-medium">Banner Image</p>
-				<div class="overflow-hidden rounded-lg border">
-					<img src={event.bannerImage} alt="Banner" class="h-48 w-full object-cover" />
+				<div class="mb-3 overflow-hidden rounded-lg border bg-muted/20">
+					{#if event.banner_image && !event.banner_image.startsWith('data:')}
+						<img src={event.banner_image} alt="Banner" class="h-48 w-full object-cover" />
+					{:else}
+						<div class="flex h-48 w-full items-center justify-center text-sm text-muted-foreground">
+							No banner uploaded
+						</div>
+					{/if}
 				</div>
-				<div class="mt-3 flex gap-2">
-					<Button variant="outline" size="sm" onclick={() => handleImageChange('banner')} class="gap-1.5">
-						<Upload class="size-3.5" /> Change
-					</Button>
-					<Button variant="destructive" size="sm" onclick={() => handleImageDelete('banner')} class="gap-1.5">
-						<Trash2 class="size-3.5" /> Remove
+				<div class="flex items-center gap-2">
+					<Input type="file" name="image" accept="image/*" class="w-auto bg-white" required />
+					<Button type="submit" size="sm" variant="outline" disabled={uploadingImage} class="gap-1.5 shrink-0">
+						<Upload class="size-3.5" />
+						{uploadingImage ? 'Uploading...' : 'Upload Banner'}
 					</Button>
 				</div>
-			</div>
+			</form>
+
 			<Separator />
-			<div>
+
+			<!-- Poster -->
+			<form
+				method="POST"
+				action="?/updateImage"
+				enctype="multipart/form-data"
+				use:enhance={() => {
+					uploadingImage = true;
+					return async ({ update }) => {
+						await update();
+						uploadingImage = false;
+					};
+				}}
+			>
+				<!-- eventId hidden field — this is the fix -->
+				<input type="hidden" name="eventId" value={eventId} />
+				<input type="hidden" name="imageType" value="poster" />
+
 				<p class="mb-3 font-medium">Poster Image</p>
-				<div class="overflow-hidden rounded-lg border">
-					<img src={event.posterImage} alt="Poster" class="h-64 w-56 object-cover" />
+				<div class="mb-3 w-56 overflow-hidden rounded-lg border bg-muted/20">
+					{#if event.poster_image && !event.poster_image.startsWith('data:')}
+						<img src={event.poster_image} alt="Poster" class="h-64 w-56 object-cover" />
+					{:else}
+						<div class="flex h-64 w-56 items-center justify-center text-sm text-muted-foreground">
+							No poster uploaded
+						</div>
+					{/if}
 				</div>
-				<div class="mt-3 flex gap-2">
-					<Button variant="outline" size="sm" onclick={() => handleImageChange('poster')} class="gap-1.5">
-						<Upload class="size-3.5" /> Change
-					</Button>
-					<Button variant="destructive" size="sm" onclick={() => handleImageDelete('poster')} class="gap-1.5">
-						<Trash2 class="size-3.5" /> Remove
+				<div class="flex flex-col gap-2 w-56">
+					<Input type="file" name="image" accept="image/*" class="bg-white" required />
+					<Button type="submit" size="sm" variant="outline" disabled={uploadingImage} class="gap-1.5">
+						<Upload class="size-3.5" />
+						{uploadingImage ? 'Uploading...' : 'Upload Poster'}
 					</Button>
 				</div>
-			</div>
+			</form>
 		</div>
 	</TabsContent>
 
-	<!-- DOCUMENTS -->
+	<!-- DOCUMENTS TAB -->
 	<TabsContent value="documents">
 		<div class="max-w-xl">
 			<div class="mb-4 flex items-center justify-between">
 				<p class="font-medium">PDF Documents</p>
-				<Button size="sm" onclick={handleDocUpload} class="gap-1.5">
+				<Button size="sm" class="gap-1.5">
 					<Upload class="size-3.5" /> Upload PDF
 				</Button>
 			</div>
-			{#if event.documents.length === 0}
-				<div class="text-muted-foreground rounded-lg border border-dashed p-8 text-center text-sm">
-					No documents uploaded yet.
-				</div>
-			{:else}
-				<div class="flex flex-col gap-2">
-					{#each event.documents as doc}
-						<div class="flex items-center justify-between rounded-lg border px-4 py-3">
-							<div class="flex items-center gap-2.5">
-								<FileText class="text-muted-foreground size-4" />
-								<span class="text-sm">{doc.name}</span>
-							</div>
-							<Button
-								variant="ghost"
-								size="sm"
-								onclick={() => handleDocDelete(doc.name)}
-								class="text-destructive hover:text-destructive gap-1.5"
-							>
-								<Trash2 class="size-3.5" /> Delete
-							</Button>
-						</div>
-					{/each}
-				</div>
-			{/if}
+			<div class="text-muted-foreground rounded-lg border border-dashed p-8 text-center text-sm">
+				No documents uploaded yet. (PDF support coming soon!)
+			</div>
 		</div>
 	</TabsContent>
 </Tabs>

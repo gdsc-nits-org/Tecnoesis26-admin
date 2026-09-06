@@ -1,37 +1,16 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { goto } from '$app/navigation';
-	import { mockModules } from '$lib/mock/data';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import { Separator } from '$lib/components/ui/separator/index.js';
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
+	import { enhance } from '$app/forms';
 
-	const moduleId = Number($page.params.module);
-
-	let selectedModuleId = $state(moduleId);
-	let name = $state('');
-	let description = $state('');
-	let venue = $state('');
-	let minTeamSize = $state(1);
-	let maxTeamSize = $state(4);
-	let registrationEndTime = $state('');
-	let prizeDescription = $state('');
-	let stagesDescription = $state('');
+	let { form } = $props();
+	let moduleId = $derived($page.params.module);
 	let submitting = $state(false);
-
-	function handleCreate() {
-		submitting = true;
-		console.log('creating event...', {
-			moduleId: selectedModuleId,
-			name, description, venue,
-			minTeamSize, maxTeamSize,
-			registrationEndTime, prizeDescription, stagesDescription
-		});
-		goto(`/modules/${selectedModuleId}`);
-	}
 </script>
 
 <svelte:head>
@@ -47,63 +26,83 @@
 	<p class="text-muted-foreground text-sm">Set up a new event and its details.</p>
 </div>
 
-<div class="max-w-2xl space-y-5">
-	<div class="space-y-1.5">
-		<Label for="module">Module</Label>
-		<select
-			id="module"
-			bind:value={selectedModuleId}
-			class="border-input flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm shadow-xs"
-		>
-			{#each mockModules as m}
-				<option value={m.id}>{m.name}</option>
-			{/each}
-		</select>
-	</div>
+<!-- 
+  enctype="multipart/form-data" is required for file uploads to work!
+-->
+<form 
+	method="POST" 
+	action="?/create" 
+	enctype="multipart/form-data" 
+	class="max-w-2xl space-y-5"
+	use:enhance={() => {
+		submitting = true;
+		return async ({ update }) => {
+			await update();
+			submitting = false;
+		};
+	}}
+>
+	{#if form?.error}
+		<div class="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+			{form.error}
+		</div>
+	{/if}
 
 	<div class="space-y-1.5">
-		<Label for="name">Event Name</Label>
-		<Input id="name" bind:value={name} placeholder="e.g. Coding Hackathon" />
+		<Label for="name">Event Name *</Label>
+		<Input id="name" name="name" required placeholder="e.g. Coding Hackathon" />
 	</div>
 
 	<div class="space-y-1.5">
 		<Label for="description">Description</Label>
-		<Textarea id="description" bind:value={description} rows={4} placeholder="What's this event about?" />
+		<Textarea id="description" name="description" rows={4} placeholder="What's this event about?" />
 	</div>
 
 	<div class="space-y-1.5">
-		<Label for="venue">Venue</Label>
-		<Input id="venue" bind:value={venue} placeholder="e.g. LHC 101" />
+		<Label for="venue">Venue *</Label>
+		<Input id="venue" name="venue" required placeholder="e.g. LHC 101" />
 	</div>
 
 	<div class="grid grid-cols-2 gap-4">
 		<div class="space-y-1.5">
-			<Label for="min">Min Team Size</Label>
-			<Input id="min" type="number" bind:value={minTeamSize} min={1} />
+			<Label for="minTeamSize">Min Team Size</Label>
+			<Input id="minTeamSize" name="minTeamSize" type="number" value="1" min="1" />
 		</div>
 		<div class="space-y-1.5">
-			<Label for="max">Max Team Size</Label>
-			<Input id="max" type="number" bind:value={maxTeamSize} min={1} />
+			<Label for="maxTeamSize">Max Team Size</Label>
+			<Input id="maxTeamSize" name="maxTeamSize" type="number" value="4" min="1" />
 		</div>
 	</div>
 
 	<div class="space-y-1.5">
-		<Label for="reg-end">Registration Close Date</Label>
-		<Input id="reg-end" type="date" bind:value={registrationEndTime} />
+		<Label for="registrationEndTime">Registration Close Date *</Label>
+		<Input id="registrationEndTime" name="registrationEndTime" type="date" required />
+	</div>
+
+	<!-- New Image Upload Fields -->
+	<div class="grid grid-cols-2 gap-4 p-4 border rounded-lg bg-muted/20">
+		<div class="space-y-1.5">
+			<Label for="poster">Poster Image</Label>
+			<Input id="poster" name="poster" type="file" accept="image/*" class="bg-white" />
+		</div>
+		<div class="space-y-1.5">
+			<Label for="banner">Banner Image</Label>
+			<Input id="banner" name="banner" type="file" accept="image/*" class="bg-white" />
+		</div>
 	</div>
 
 	<div class="space-y-1.5">
-		<Label for="prize">Prize Description</Label>
-		<Textarea id="prize" bind:value={prizeDescription} rows={2} placeholder="Optional" />
+		<Label for="prizeDescription">Prize Description</Label>
+		<Textarea id="prizeDescription" name="prizeDescription" rows={2} placeholder="Optional" />
 	</div>
 
 	<div class="space-y-1.5">
-		<Label for="stages">Stages Description</Label>
-		<Textarea id="stages" bind:value={stagesDescription} rows={3} placeholder="Optional" />
+		<Label for="stagesDescription">Stages Description</Label>
+		<Textarea id="stagesDescription" name="stagesDescription" rows={3} placeholder="Optional" />
 	</div>
 
 	<Separator />
-	<Button onclick={handleCreate} disabled={submitting || !name || !venue}>
-		Create Event
+	<Button type="submit" disabled={submitting}>
+		{submitting ? 'Creating Event...' : 'Create Event'}
 	</Button>
-</div>
+</form>

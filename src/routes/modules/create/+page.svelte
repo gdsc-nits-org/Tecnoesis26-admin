@@ -1,26 +1,29 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { mockUser } from '$lib/mock/data';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Textarea } from '$lib/components/ui/textarea/index.js';
 	import { Separator } from '$lib/components/ui/separator/index.js';
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
+	import ImageIcon from '@lucide/svelte/icons/image';
+	import { enhance } from '$app/forms';
 
-	if (mockUser.role !== 'super_admin') goto('/modules');
+	let { form } = $props();
 
-	let name = $state('');
-	let description = $state('');
-	let iconImage = $state('');
-	let coverImage = $state('');
-	let thirdPartyUrl = $state('');
+	let iconPreview = $state<string | null>(null);
+	let coverPreview = $state<string | null>(null);
 	let submitting = $state(false);
 
-	function handleCreate() {
-		submitting = true;
-		console.log('create module', { name, description, iconImage, coverImage, thirdPartyUrl });
-		goto('/modules');
+	function previewFile(e: Event, type: 'icon' | 'cover') {
+		const input = e.currentTarget as HTMLInputElement;
+		const file = input.files?.[0];
+		if (!file) return;
+		const reader = new FileReader();
+		reader.onload = () => {
+			if (type === 'icon') iconPreview = reader.result as string;
+			else coverPreview = reader.result as string;
+		};
+		reader.readAsDataURL(file);
 	}
 </script>
 
@@ -37,40 +40,96 @@
 	<p class="text-muted-foreground text-sm">Add a new module to Tecnoesis.</p>
 </div>
 
-<div class="max-w-2xl space-y-5">
+<form
+	method="POST"
+	action="?/create"
+	enctype="multipart/form-data"
+	class="max-w-2xl space-y-5"
+	use:enhance={() => {
+		submitting = true;
+		return async ({ update }) => {
+			await update();
+			submitting = false;
+		};
+	}}
+>
+	{#if form?.error}
+		<div class="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+			{form.error}
+		</div>
+	{/if}
+
 	<div class="space-y-1.5">
-		<Label for="name">Module Name</Label>
-		<Input id="name" bind:value={name} placeholder="e.g. Technical" />
+		<Label for="name">Module Name *</Label>
+		<Input id="name" name="name" required placeholder="e.g. Technical" />
 	</div>
 
 	<div class="space-y-1.5">
 		<Label for="description">Description</Label>
-		<Textarea id="description" bind:value={description} rows={3} placeholder="What does this module cover?" />
+		<Textarea id="description" name="description" rows={3} placeholder="What does this module cover?" />
+	</div>
+
+	<!-- Cover Image Upload -->
+	<div class="space-y-1.5">
+		<Label for="coverImage">Cover Image</Label>
+		<div class="overflow-hidden rounded-lg border bg-muted/20">
+			{#if coverPreview}
+				<img src={coverPreview} alt="Cover preview" class="h-40 w-full object-cover" />
+			{:else}
+				<div class="flex h-40 w-full flex-col items-center justify-center gap-2 text-muted-foreground">
+					<ImageIcon class="size-8" />
+					<p class="text-xs">No cover image selected</p>
+				</div>
+			{/if}
+		</div>
+		<Input
+			id="coverImage"
+			name="coverImage"
+			type="file"
+			accept="image/*"
+			class="bg-white"
+			onchange={(e) => previewFile(e, 'cover')}
+		/>
+	</div>
+
+	<!-- Icon Image Upload -->
+	<div class="space-y-1.5">
+		<Label for="iconImage">Icon Image</Label>
+		<div class="flex items-center gap-4">
+			<div class="overflow-hidden rounded-lg border bg-muted/20">
+				{#if iconPreview}
+					<img src={iconPreview} alt="Icon preview" class="size-20 object-cover" />
+				{:else}
+					<div class="flex size-20 flex-col items-center justify-center text-muted-foreground">
+						<ImageIcon class="size-6" />
+					</div>
+				{/if}
+			</div>
+			<div class="flex-1">
+				<Input
+					id="iconImage"
+					name="iconImage"
+					type="file"
+					accept="image/*"
+					class="bg-white"
+					onchange={(e) => previewFile(e, 'icon')}
+				/>
+				<p class="text-muted-foreground mt-1 text-xs">Small square image shown on module card</p>
+			</div>
+		</div>
 	</div>
 
 	<div class="space-y-1.5">
-		<Label for="icon">Icon Image URL</Label>
-		<Input id="icon" bind:value={iconImage} placeholder="https://..." />
-		{#if iconImage}
-			<img src={iconImage} alt="Icon preview" class="mt-2 size-16 rounded-lg object-cover border" />
-		{/if}
-	</div>
-
-	<div class="space-y-1.5">
-		<Label for="cover">Cover Image URL</Label>
-		<Input id="cover" bind:value={coverImage} placeholder="https://..." />
-		{#if coverImage}
-			<img src={coverImage} alt="Cover preview" class="mt-2 h-28 w-full rounded-lg object-cover border" />
-		{/if}
-	</div>
-
-	<div class="space-y-1.5">
-		<Label for="url">Third Party URL <span class="text-muted-foreground">(optional)</span></Label>
-		<Input id="url" bind:value={thirdPartyUrl} placeholder="https://..." />
+		<Label for="thirdPartyUrl">
+			Third Party URL
+			<span class="text-muted-foreground">(optional)</span>
+		</Label>
+		<Input id="thirdPartyUrl" name="thirdPartyUrl" placeholder="https://..." />
 	</div>
 
 	<Separator />
-	<Button onclick={handleCreate} disabled={submitting || !name}>
-		Create Module
+
+	<Button type="submit" disabled={submitting}>
+		{submitting ? 'Creating...' : 'Create Module'}
 	</Button>
-</div>
+</form>
