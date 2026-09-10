@@ -61,12 +61,13 @@
 		Back to Module
 	</Button>
 	<h1 class="text-2xl font-bold">{event.name}</h1>
-	<p class="text-muted-foreground text-sm">Registered teams and participants.</p>
+	<p class="text-sm text-muted-foreground">Registered teams and participants.</p>
 </div>
 
 <div class="mb-4 flex items-center justify-between">
-	<p class="text-muted-foreground text-sm">
-		{registrations.length} {registrations.length === 1 ? 'team' : 'teams'} ·
+	<p class="text-sm text-muted-foreground">
+		{registrations.length}
+		{registrations.length === 1 ? 'team' : 'teams'} ·
 		{registrations.reduce((acc, r) => acc + r.members.length, 0)} participants
 	</p>
 	<Button variant="outline" size="sm" onclick={handleDownloadExcel} class="gap-1.5">
@@ -76,7 +77,7 @@
 </div>
 
 {#if registrations.length === 0}
-	<div class="text-muted-foreground rounded-lg border border-dashed p-8 text-center text-sm">
+	<div class="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
 		No registrations yet for this event.
 	</div>
 {:else}
@@ -93,19 +94,20 @@
 			<TableBody>
 				{#each registrations as reg}
 					<TableRow
-						class="hover:bg-muted/50 cursor-pointer transition-colors"
+						class="cursor-pointer transition-colors hover:bg-muted/50"
 						onclick={() => toggleTeam(reg.teamName)}
 					>
 						<TableCell class="pr-0">
 							{#if expandedTeams.has(reg.teamName)}
-								<ChevronDown class="text-muted-foreground size-4" />
+								<ChevronDown class="size-4 text-muted-foreground" />
 							{:else}
-								<ChevronRight class="text-muted-foreground size-4" />
+								<ChevronRight class="size-4 text-muted-foreground" />
 							{/if}
 						</TableCell>
 						<TableCell class="font-medium">{reg.teamName}</TableCell>
-						<TableCell class="text-muted-foreground text-sm">
-							{reg.members.length} {reg.members.length === 1 ? 'member' : 'members'}
+						<TableCell class="text-sm text-muted-foreground">
+							{reg.members.length}
+							{reg.members.length === 1 ? 'member' : 'members'}
 						</TableCell>
 						<TableCell>
 							<Badge variant={getStatusVariant(reg.registrationStatus)}>
@@ -119,16 +121,22 @@
 							<TableCell colspan={4} class="bg-muted/30 px-6 py-4">
 								<div class="flex flex-col gap-2">
 									{#each reg.members as member}
-										<div class="flex items-start gap-3 rounded-lg border bg-white px-4 py-3 shadow-sm">
-											<div class="bg-primary text-primary-foreground flex size-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold">
+										<div
+											class="flex items-start gap-3 rounded-lg border bg-white px-4 py-3 shadow-sm"
+										>
+											<div
+												class="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground"
+											>
 												{getInitials(member.firstName, member.lastName)}
 											</div>
 											<div class="min-w-0 flex-1">
 												<div class="flex items-baseline gap-2">
 													<p class="font-medium">{member.firstName} {member.lastName}</p>
-													<p class="text-muted-foreground text-xs">@{member.username}</p>
+													<p class="text-xs text-muted-foreground">@{member.username}</p>
 												</div>
-												<div class="text-muted-foreground mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+												<div
+													class="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground"
+												>
 													<span class="flex items-center gap-1">
 														<Mail class="size-3 shrink-0" />
 														{member.email}

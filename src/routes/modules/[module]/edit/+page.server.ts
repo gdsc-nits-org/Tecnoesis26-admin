@@ -33,16 +33,19 @@ export const actions: Actions = {
 
 		if (!eventId) return fail(400, { error: 'Event ID missing.' });
 
-		const { error } = await supabase.from('events').update({
-			name: formData.get('name'),
-			description: formData.get('description'),
-			venue: formData.get('venue'),
-			min_team_size: parseInt(formData.get('minTeamSize') as string) || 1,
-			max_team_size: parseInt(formData.get('maxTeamSize') as string) || 4,
-			registration_end_time: formData.get('registrationEndTime'),
-			prize_description: formData.get('prizeDescription'),
-			stages_description: formData.get('stagesDescription')
-		}).eq('id', eventId);
+		const { error } = await supabase
+			.from('events')
+			.update({
+				name: formData.get('name'),
+				description: formData.get('description'),
+				venue: formData.get('venue'),
+				min_team_size: parseInt(formData.get('minTeamSize') as string) || 1,
+				max_team_size: parseInt(formData.get('maxTeamSize') as string) || 4,
+				registration_end_time: formData.get('registrationEndTime'),
+				prize_description: formData.get('prizeDescription'),
+				stages_description: formData.get('stagesDescription')
+			})
+			.eq('id', eventId);
 
 		if (error) {
 			console.error('Update error:', error);
@@ -66,14 +69,10 @@ export const actions: Actions = {
 
 		try {
 			const imageUrl = await uploadImageToCloudinary(file);
-			const updateData = imageType === 'banner'
-				? { banner_image: imageUrl }
-				: { poster_image: imageUrl };
+			const updateData =
+				imageType === 'banner' ? { banner_image: imageUrl } : { poster_image: imageUrl };
 
-			const { error } = await supabase
-				.from('events')
-				.update(updateData)
-				.eq('id', eventId);
+			const { error } = await supabase.from('events').update(updateData).eq('id', eventId);
 
 			if (error) throw error;
 			return { success: true };
@@ -93,10 +92,7 @@ export const actions: Actions = {
 
 		if (!eventId) return fail(400, { error: 'Event ID missing.' });
 
-		const { error } = await supabase
-			.from('events')
-			.delete()
-			.eq('id', eventId);
+		const { error } = await supabase.from('events').delete().eq('id', eventId);
 
 		if (error) {
 			console.error('Delete error:', error);

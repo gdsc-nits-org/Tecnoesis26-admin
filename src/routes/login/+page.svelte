@@ -6,15 +6,10 @@
 
 	let { form } = $props();
 
-	let step = $state<'email' | 'otp'>('email');
-	let email = $state('');
+	let step = $derived(form?.success ? 'otp' : 'email');
+	let email = $state(form?.email ?? '');
+	let otp = $state(''); 
 	let loading = $state(false);
-
-	function handleEmailSubmit() {
-		// will call supabase.auth.signInWithOtp() later
-		// for now just move to step 2
-		step = 'otp';
-	}
 </script>
 
 <svelte:head>
@@ -25,71 +20,84 @@
 	<div class="w-full max-w-sm">
 		<div class="mb-8 text-center">
 			<h1 class="text-2xl font-bold">Tecnoesis Admin</h1>
-			<p class="text-muted-foreground mt-1 text-sm">Sign in with your club email</p>
+			<p class="mt-1 text-sm text-muted-foreground">Sign in with your club email</p>
 		</div>
 
 		<div class="rounded-xl border bg-white p-6 shadow-sm">
 			{#if step === 'email'}
-				<!-- Step 1: Email -->
-				<div class="space-y-4">
-					<div class="space-y-1.5">
-						<Label for="email">Email address</Label>
-						<Input
-							id="email"
-							type="email"
-							bind:value={email}
-							placeholder="you@tecnoesis.club"
-						/>
-					</div>
-
-					{#if form?.error}
-						<p class="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-							{form.error}
-						</p>
-					{/if}
-
-					<Button class="w-full" onclick={handleEmailSubmit}>
-						Send OTP
-					</Button>
-				</div>
-
-			{:else}
-				<!-- Step 2: OTP -->
-				<form method="POST" action="?/login" use:enhance class="space-y-4">
-					<input type="hidden" name="email" value={email} />
-
-					<div class="space-y-1.5">
-						<Label for="otp">Enter OTP</Label>
-						<p class="text-muted-foreground text-xs">
-							We sent a 6-digit code to <strong>{email}</strong>
-						</p>
-						<Input
-							id="otp"
-							name="otp"
-							type="text"
-							inputmode="numeric"
-							maxlength={6}
-							placeholder="000000"
-							class="text-center tracking-widest"
-						/>
-					</div>
-
-					{#if form?.error}
-						<p class="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-							{form.error}
-						</p>
-					{/if}
-
-					<Button type="submit" class="w-full">Verify OTP</Button>
-
-					<button
-						type="button"
-						onclick={() => (step = 'email')}
-						class="text-muted-foreground hover:text-foreground w-full text-center text-xs transition"
+				<!-- Step 1: Request OTP -->
+					<form 
+						method="POST" 
+						action="?/sendOtp" 
+						class="space-y-4"
+						use:enhance={() => {
+							loading = true;
+							return async ({ update }) => {
+								await update();
+								loading = false;
+							};
+						}}
 					>
-						Use a different email
-					</button>
-				</form>
+						<div class="space-y-1.5">
+							<Label for="email">Email address</Label>
+							<Input id="email" name="email" type="email" bind:value={email} placeholder="you@nits.ac.in" required />
+						</div>
+
+						{#if form?.error}
+							<p class="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+								{form.error}
+							</p>
+						{/if}
+
+						<Button type="submit" class="w-full" disabled={loading}>
+							{loading ? 'Sending...' : 'Send OTP'}
+						</Button>
+					</form>
+				{:else}
+					<!-- Step 2: Verify OTP -->
+					<form 
+						method="POST" 
+						action="?/verifyOtp" 
+						class="space-y-4"
+						use:enhance={() => {
+							loading = true;
+							return async ({ update }) => {
+								await update();
+								loading = false;
+							};
+						}}
+					>
+						<!-- Guarantee both values are sent using hidden native inputs and the secure form object -->
+						<input type="hidden" name="email" value={form?.email || email} />
+						<input type="hidden" name="otp" value={otp} />
+
+						<div class="space-y-1.5">
+							<Label for="otp">Enter OTP</Label>
+							<p class="text-xs text-muted-foreground">
+								We sent an 8-digit code to <strong>{form?.email || email}</strong>
+							</p>
+							<Input
+								id="otp"
+								type="text"
+								inputmode="numeric"
+								maxlength={8}
+								placeholder="00000000"
+								class="text-center tracking-widest"
+								bind:value={otp} 
+								required
+							/>
+						</div>
+
+						{#if form?.error}
+							<p class="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+								{form.error}
+							</p>
+						{/if}
+
+						<Button type="submit" class="w-full" disabled={loading}>
+							{loading ? 'Verifying...' : 'Verify OTP'}
+						</Button>
+					</form>
 			{/if}
 		</div>
 	</div>

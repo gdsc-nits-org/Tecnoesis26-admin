@@ -3,7 +3,7 @@ export const mockUser = {
 	id: 'usr-001',
 	name: 'tecno.dev',
 	email: 'superadmin@tecnoesis.club',
-	role: 'super_admin' as 'super_admin' | 'admin'   // ← change this value to test
+	role: 'super_admin' as 'super_admin' | 'admin' // ← change this value to test
 };
 
 export const mockAdminUsers = [

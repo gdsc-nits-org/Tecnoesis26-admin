@@ -48,7 +48,10 @@
 	function handleToggleRole(id: string) {
 		admins = admins.map((a) =>
 			a.id === id
-				? { ...a, role: a.role === 'super_admin' ? 'admin' : 'super_admin' as 'admin' | 'super_admin' }
+				? {
+						...a,
+						role: a.role === 'super_admin' ? 'admin' : ('super_admin' as 'admin' | 'super_admin')
+					}
 				: a
 		);
 	}
@@ -58,7 +61,7 @@
 	<title>Admin Users — Tecnoesis Admin</title>
 </svelte:head>
 
-<div class="p-6 mx-auto max-w-7xl">
+<div class="mx-auto max-w-7xl p-6">
 	<div class="mb-6 flex items-start justify-between">
 		<div>
 			<Button href="/modules" variant="ghost" size="sm" class="mb-4 gap-1 pl-0">
@@ -66,9 +69,9 @@
 				Back to Modules
 			</Button>
 			<h1 class="text-2xl font-bold">Admin Users</h1>
-			<p class="text-muted-foreground text-sm mt-1">Manage who has access to this admin panel.</p>
+			<p class="mt-1 text-sm text-muted-foreground">Manage who has access to this admin panel.</p>
 		</div>
-		<Button size="sm" class="gap-1.5 mt-8" onclick={() => (adding = !adding)}>
+		<Button size="sm" class="mt-8 gap-1.5" onclick={() => (adding = !adding)}>
 			<Plus class="size-3.5" />
 			Add Admin
 		</Button>
@@ -76,18 +79,24 @@
 
 	{#if adding}
 		<div class="mb-6 rounded-lg border p-4">
-			<p class="mb-3 font-medium text-sm">New Admin</p>
+			<p class="mb-3 text-sm font-medium">New Admin</p>
 			<div class="flex flex-wrap items-end gap-3">
 				<div class="space-y-1.5">
 					<Label for="email">Email</Label>
-					<Input id="email" type="email" bind:value={newEmail} placeholder="admin@tecnoesis.club" class="w-64" />
+					<Input
+						id="email"
+						type="email"
+						bind:value={newEmail}
+						placeholder="admin@tecnoesis.club"
+						class="w-64"
+					/>
 				</div>
 				<div class="space-y-1.5">
 					<Label for="role">Role</Label>
 					<select
 						id="role"
 						bind:value={newRole}
-						class="border-input flex h-9 rounded-md border bg-transparent px-3 py-1 text-sm shadow-xs"
+						class="flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
 					>
 						<option value="admin">Admin</option>
 						<option value="super_admin">Super Admin</option>
@@ -121,7 +130,7 @@
 								{admin.role === 'super_admin' ? 'Super Admin' : 'Admin'}
 							</Badge>
 						</TableCell>
-						<TableCell class="text-muted-foreground text-sm">{admin.createdAt}</TableCell>
+						<TableCell class="text-sm text-muted-foreground">{admin.createdAt}</TableCell>
 						<TableCell class="text-right">
 							<div class="flex items-center justify-end gap-2">
 								{#if admin.id !== mockUser.id}
@@ -142,7 +151,7 @@
 										<Trash2 class="size-3.5" />
 									</Button>
 								{:else}
-									<span class="text-muted-foreground text-xs">You</span>
+									<span class="text-xs text-muted-foreground">You</span>
 								{/if}
 							</div>
 						</TableCell>

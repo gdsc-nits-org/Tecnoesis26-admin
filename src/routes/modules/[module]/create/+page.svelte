@@ -23,16 +23,16 @@
 		Back to Module
 	</Button>
 	<h1 class="text-2xl font-bold">Create Event</h1>
-	<p class="text-muted-foreground text-sm">Set up a new event and its details.</p>
+	<p class="text-sm text-muted-foreground">Set up a new event and its details.</p>
 </div>
 
 <!-- 
   enctype="multipart/form-data" is required for file uploads to work!
 -->
-<form 
-	method="POST" 
-	action="?/create" 
-	enctype="multipart/form-data" 
+<form
+	method="POST"
+	action="?/create"
+	enctype="multipart/form-data"
 	class="max-w-2xl space-y-5"
 	use:enhance={() => {
 		submitting = true;
@@ -80,7 +80,7 @@
 	</div>
 
 	<!-- New Image Upload Fields -->
-	<div class="grid grid-cols-2 gap-4 p-4 border rounded-lg bg-muted/20">
+	<div class="grid grid-cols-2 gap-4 rounded-lg border bg-muted/20 p-4">
 		<div class="space-y-1.5">
 			<Label for="poster">Poster Image</Label>
 			<Input id="poster" name="poster" type="file" accept="image/*" class="bg-white" />

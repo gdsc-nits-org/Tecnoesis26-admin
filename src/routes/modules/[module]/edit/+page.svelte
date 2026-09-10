@@ -33,15 +33,11 @@
 			Back to Module
 		</Button>
 		<h1 class="text-2xl font-bold">{event.name}</h1>
-		<p class="text-muted-foreground mt-1 text-sm">Edit event details, images and documents.</p>
+		<p class="mt-1 text-sm text-muted-foreground">Edit event details, images and documents.</p>
 	</div>
 
 	<!-- DELETE FORM — eventId as hidden field -->
-	<form
-		method="POST"
-		action="?/deleteEvent"
-		use:enhance
-	>
+	<form method="POST" action="?/deleteEvent" use:enhance>
 		<input type="hidden" name="eventId" value={eventId} />
 		<Button
 			type="submit"
@@ -109,24 +105,51 @@
 			<div class="grid grid-cols-2 gap-4">
 				<div class="space-y-1.5">
 					<Label for="minTeamSize">Min Team Size</Label>
-					<Input id="minTeamSize" name="minTeamSize" type="number" value={event.min_team_size} min={1} />
+					<Input
+						id="minTeamSize"
+						name="minTeamSize"
+						type="number"
+						value={event.min_team_size}
+						min={1}
+					/>
 				</div>
 				<div class="space-y-1.5">
 					<Label for="maxTeamSize">Max Team Size</Label>
-					<Input id="maxTeamSize" name="maxTeamSize" type="number" value={event.max_team_size} min={1} />
+					<Input
+						id="maxTeamSize"
+						name="maxTeamSize"
+						type="number"
+						value={event.max_team_size}
+						min={1}
+					/>
 				</div>
 			</div>
 			<div class="space-y-1.5">
 				<Label for="registrationEndTime">Registration Close Date</Label>
-				<Input id="registrationEndTime" name="registrationEndTime" type="date" value={event.registration_end_time?.split('T')[0]} />
+				<Input
+					id="registrationEndTime"
+					name="registrationEndTime"
+					type="date"
+					value={event.registration_end_time?.split('T')[0]}
+				/>
 			</div>
 			<div class="space-y-1.5">
 				<Label for="prizeDescription">Prize Description</Label>
-				<Textarea id="prizeDescription" name="prizeDescription" value={event.prize_description} rows={2} />
+				<Textarea
+					id="prizeDescription"
+					name="prizeDescription"
+					value={event.prize_description}
+					rows={2}
+				/>
 			</div>
 			<div class="space-y-1.5">
 				<Label for="stagesDescription">Stages Description</Label>
-				<Textarea id="stagesDescription" name="stagesDescription" value={event.stages_description} rows={3} />
+				<Textarea
+					id="stagesDescription"
+					name="stagesDescription"
+					value={event.stages_description}
+					rows={3}
+				/>
 			</div>
 			<Separator />
 			<Button type="submit" disabled={saving}>
@@ -138,7 +161,6 @@
 	<!-- IMAGES TAB -->
 	<TabsContent value="images">
 		<div class="max-w-3xl space-y-8">
-
 			<!-- Banner -->
 			<form
 				method="POST"
@@ -168,7 +190,13 @@
 				</div>
 				<div class="flex items-center gap-2">
 					<Input type="file" name="image" accept="image/*" class="w-auto bg-white" required />
-					<Button type="submit" size="sm" variant="outline" disabled={uploadingImage} class="gap-1.5 shrink-0">
+					<Button
+						type="submit"
+						size="sm"
+						variant="outline"
+						disabled={uploadingImage}
+						class="shrink-0 gap-1.5"
+					>
 						<Upload class="size-3.5" />
 						{uploadingImage ? 'Uploading...' : 'Upload Banner'}
 					</Button>
@@ -204,9 +232,15 @@
 						</div>
 					{/if}
 				</div>
-				<div class="flex flex-col gap-2 w-56">
+				<div class="flex w-56 flex-col gap-2">
 					<Input type="file" name="image" accept="image/*" class="bg-white" required />
-					<Button type="submit" size="sm" variant="outline" disabled={uploadingImage} class="gap-1.5">
+					<Button
+						type="submit"
+						size="sm"
+						variant="outline"
+						disabled={uploadingImage}
+						class="gap-1.5"
+					>
 						<Upload class="size-3.5" />
 						{uploadingImage ? 'Uploading...' : 'Upload Poster'}
 					</Button>
@@ -224,7 +258,7 @@
 					<Upload class="size-3.5" /> Upload PDF
 				</Button>
 			</div>
-			<div class="text-muted-foreground rounded-lg border border-dashed p-8 text-center text-sm">
+			<div class="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
 				No documents uploaded yet. (PDF support coming soon!)
 			</div>
 		</div>

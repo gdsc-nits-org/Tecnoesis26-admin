@@ -27,16 +27,12 @@
 			Back to Modules
 		</Button>
 		<h1 class="text-2xl font-bold">{currentModule?.name} Events</h1>
-		<p class="text-muted-foreground mt-1 text-sm">{currentModule?.description}</p>
+		<p class="mt-1 text-sm text-muted-foreground">{currentModule?.description}</p>
 	</div>
 
 	<div class="flex items-center gap-2">
 		<!-- Delete Module -->
-		<form
-			method="POST"
-			action="?/deleteModule"
-			use:enhance
-		>
+		<form method="POST" action="?/deleteModule" use:enhance>
 			<Button
 				type="submit"
 				variant="destructive"
@@ -61,13 +57,15 @@
 </div>
 
 {#if moduleEvents.length === 0}
-	<div class="text-muted-foreground rounded-lg border border-dashed p-8 text-center text-sm">
+	<div class="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
 		No events found for this module.
 	</div>
 {:else}
 	<div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-		{#each moduleEvents as event}
-			<div class="flex flex-col justify-between rounded-lg border p-5 shadow-sm transition hover:shadow-md">
+		{#each moduleEvents as event (event.id)}
+			<div
+				class="flex flex-col justify-between rounded-lg border p-5 shadow-sm transition hover:shadow-md"
+			>
 				<div>
 					<div class="mb-3 flex items-start justify-between gap-4">
 						<h3 class="text-lg font-semibold">{event.name}</h3>
@@ -75,7 +73,7 @@
 							Team: {event.min_team_size}-{event.max_team_size}
 						</Badge>
 					</div>
-					<p class="text-muted-foreground mb-4 line-clamp-2 text-sm">{event.description}</p>
+					<p class="mb-4 line-clamp-2 text-sm text-muted-foreground">{event.description}</p>
 
 					<div class="mb-6 space-y-2 text-sm text-muted-foreground">
 						<div class="flex items-center gap-2">

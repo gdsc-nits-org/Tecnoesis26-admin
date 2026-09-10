@@ -10,18 +10,16 @@
 
 	let { form } = $props();
 
-	let iconPreview = $state<string | null>(null);
 	let coverPreview = $state<string | null>(null);
 	let submitting = $state(false);
 
-	function previewFile(e: Event, type: 'icon' | 'cover') {
+	function previewFile(e: Event) {
 		const input = e.currentTarget as HTMLInputElement;
 		const file = input.files?.[0];
 		if (!file) return;
 		const reader = new FileReader();
 		reader.onload = () => {
-			if (type === 'icon') iconPreview = reader.result as string;
-			else coverPreview = reader.result as string;
+			coverPreview = reader.result as string;
 		};
 		reader.readAsDataURL(file);
 	}
@@ -37,7 +35,7 @@
 		All Modules
 	</Button>
 	<h1 class="text-2xl font-bold">Create Module</h1>
-	<p class="text-muted-foreground text-sm">Add a new module to Tecnoesis.</p>
+	<p class="text-sm text-muted-foreground">Add a new module to Tecnoesis.</p>
 </div>
 
 <form
@@ -66,7 +64,12 @@
 
 	<div class="space-y-1.5">
 		<Label for="description">Description</Label>
-		<Textarea id="description" name="description" rows={3} placeholder="What does this module cover?" />
+		<Textarea
+			id="description"
+			name="description"
+			rows={3}
+			placeholder="What does this module cover?"
+		/>
 	</div>
 
 	<!-- Cover Image Upload -->
@@ -76,7 +79,9 @@
 			{#if coverPreview}
 				<img src={coverPreview} alt="Cover preview" class="h-40 w-full object-cover" />
 			{:else}
-				<div class="flex h-40 w-full flex-col items-center justify-center gap-2 text-muted-foreground">
+				<div
+					class="flex h-40 w-full flex-col items-center justify-center gap-2 text-muted-foreground"
+				>
 					<ImageIcon class="size-8" />
 					<p class="text-xs">No cover image selected</p>
 				</div>
@@ -88,35 +93,8 @@
 			type="file"
 			accept="image/*"
 			class="bg-white"
-			onchange={(e) => previewFile(e, 'cover')}
+			onchange={previewFile}
 		/>
-	</div>
-
-	<!-- Icon Image Upload -->
-	<div class="space-y-1.5">
-		<Label for="iconImage">Icon Image</Label>
-		<div class="flex items-center gap-4">
-			<div class="overflow-hidden rounded-lg border bg-muted/20">
-				{#if iconPreview}
-					<img src={iconPreview} alt="Icon preview" class="size-20 object-cover" />
-				{:else}
-					<div class="flex size-20 flex-col items-center justify-center text-muted-foreground">
-						<ImageIcon class="size-6" />
-					</div>
-				{/if}
-			</div>
-			<div class="flex-1">
-				<Input
-					id="iconImage"
-					name="iconImage"
-					type="file"
-					accept="image/*"
-					class="bg-white"
-					onchange={(e) => previewFile(e, 'icon')}
-				/>
-				<p class="text-muted-foreground mt-1 text-xs">Small square image shown on module card</p>
-			</div>
-		</div>
 	</div>
 
 	<div class="space-y-1.5">

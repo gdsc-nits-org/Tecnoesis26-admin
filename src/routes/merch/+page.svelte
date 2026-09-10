@@ -28,7 +28,7 @@
 	<title>Merch Orders — Tecnoesis Admin</title>
 </svelte:head>
 
-<div class="p-6 mx-auto max-w-7xl">
+<div class="mx-auto max-w-7xl p-6">
 	<div class="mb-6 flex items-start justify-between">
 		<div>
 			<Button href="/modules" variant="ghost" size="sm" class="mb-4 gap-1 pl-0">
@@ -36,9 +36,11 @@
 				Back to Modules
 			</Button>
 			<h1 class="text-2xl font-bold">Merch Orders</h1>
-			<p class="text-muted-foreground text-sm mt-1">All merchandise orders placed by participants.</p>
+			<p class="mt-1 text-sm text-muted-foreground">
+				All merchandise orders placed by participants.
+			</p>
 		</div>
-		<Button variant="outline" size="sm" onclick={handleDownload} class="gap-1.5 mt-8">
+		<Button variant="outline" size="sm" onclick={handleDownload} class="mt-8 gap-1.5">
 			<Download class="size-3.5" />
 			Download Excel
 		</Button>
@@ -47,15 +49,15 @@
 	<!-- Summary -->
 	<div class="mb-6 grid grid-cols-3 gap-4">
 		<div class="rounded-lg border p-4">
-			<p class="text-muted-foreground text-xs">Total Orders</p>
+			<p class="text-xs text-muted-foreground">Total Orders</p>
 			<p class="mt-1 text-2xl font-bold">{mockMerchOrders.length}</p>
 		</div>
 		<div class="rounded-lg border p-4">
-			<p class="text-muted-foreground text-xs">Tecnoesis</p>
+			<p class="text-xs text-muted-foreground">Tecnoesis</p>
 			<p class="mt-1 text-2xl font-bold">{tecnoesisCount}</p>
 		</div>
 		<div class="rounded-lg border p-4">
-			<p class="text-muted-foreground text-xs">Spark</p>
+			<p class="text-xs text-muted-foreground">Spark</p>
 			<p class="mt-1 text-2xl font-bold">{sparkCount}</p>
 		</div>
 	</div>
@@ -76,17 +78,18 @@
 				{#each mockMerchOrders as order}
 					<TableRow>
 						<TableCell class="font-medium">
-							{order.user.firstName} {order.user.lastName}
+							{order.user.firstName}
+							{order.user.lastName}
 						</TableCell>
-						<TableCell class="text-muted-foreground text-sm">{order.user.email}</TableCell>
-						<TableCell class="text-muted-foreground text-sm">{order.user.registrationId}</TableCell>
+						<TableCell class="text-sm text-muted-foreground">{order.user.email}</TableCell>
+						<TableCell class="text-sm text-muted-foreground">{order.user.registrationId}</TableCell>
 						<TableCell>
 							<Badge variant={order.type === 'Tecnoesis' ? 'default' : 'secondary'}>
 								{order.type}
 							</Badge>
 						</TableCell>
 						<TableCell>{order.size}</TableCell>
-						<TableCell class="text-muted-foreground text-sm">
+						<TableCell class="text-sm text-muted-foreground">
 							{new Date(order.createdAt).toLocaleDateString('en-IN')}
 						</TableCell>
 					</TableRow>

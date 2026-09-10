@@ -4,7 +4,11 @@ declare global {
 	namespace App {
 		interface Locals {
 			supabase: ReturnType<typeof import('$lib/supabase').getSupabaseServerClient>;
-			user: Awaited<ReturnType<typeof import('@supabase/supabase-js').AuthClient['getUser']>>['data']['user'] | null;
+			user:
+				| Awaited<
+						ReturnType<(typeof import('@supabase/supabase-js').AuthClient)['getUser']>
+				  >['data']['user']
+				| null;
 		}
 		// interface Error {}
 		// interface PageData {}

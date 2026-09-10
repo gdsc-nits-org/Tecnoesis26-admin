@@ -16,10 +16,7 @@ export const load: PageServerLoad = async ({ params }) => {
 		throw error(404, 'Module not found.');
 	}
 
-	const { data: events } = await supabase
-		.from('events')
-		.select('*')
-		.eq('module_id', moduleId);
+	const { data: events } = await supabase.from('events').select('*').eq('module_id', moduleId);
 
 	return {
 		module: moduleData,
@@ -35,10 +32,7 @@ export const actions: Actions = {
 		// Delete all events in module first to avoid FK constraint errors
 		await supabase.from('events').delete().eq('module_id', moduleId);
 
-		const { error: dbError } = await supabase
-			.from('modules')
-			.delete()
-			.eq('id', moduleId);
+		const { error: dbError } = await supabase.from('modules').delete().eq('id', moduleId);
 
 		if (dbError) {
 			console.error('Delete module error:', dbError);

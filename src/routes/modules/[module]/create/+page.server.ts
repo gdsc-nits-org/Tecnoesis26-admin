@@ -33,7 +33,7 @@ export const actions: Actions = {
 				bannerImage = await uploadImageToCloudinary(bannerFile);
 			}
 		} catch (err) {
-			console.error("Image upload failed", err);
+			console.error('Image upload failed', err);
 			return fail(500, { error: 'Failed to upload images to Cloudinary.' });
 		}
 
@@ -49,7 +49,7 @@ export const actions: Actions = {
 			prize_description: prizeDescription,
 			stages_description: stagesDescription,
 			poster_image: posterImage,
-			banner_image: bannerImage,
+			banner_image: bannerImage
 		});
 
 		if (dbError) {
