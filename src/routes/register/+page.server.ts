@@ -9,7 +9,6 @@ export const load: PageServerLoad = async ({ cookies }) => {
 	if (data.user) {
 		throw redirect(303, '/modules');
 	}
-	return {};
 };
 
 export const actions: Actions = {
@@ -17,8 +16,19 @@ export const actions: Actions = {
 		const formData = await request.formData();
 		const email = String(formData.get('email') ?? '').trim().toLowerCase();
 		const password = String(formData.get('password') ?? '');
+		const confirmPassword = String(formData.get('confirmPassword') ?? '');
 
-		if (!email || !password) return fail(400, { error: 'Email and password are required.', email });
+		if (!email || !password || !confirmPassword) {
+			return fail(400, { error: 'Email and both password fields are required.', email });
+		}
+
+		if (password.length < 6) {
+			return fail(400, { error: 'Password must be at least 6 characters.', email });
+		}
+
+		if (password !== confirmPassword) {
+			return fail(400, { error: 'Passwords do not match.', email });
+		}
 
 		const supabase = getSupabaseServerClient(cookies);
 		const { data: adminRecord, error: adminError } = await supabase
@@ -32,13 +42,17 @@ export const actions: Actions = {
 		}
 
 		if (!adminRecord) {
-			return fail(403, { error: 'Access denied. You must be added by a Super Admin first.' });
+			return fail(403, { error: 'Access denied. You must be added by a Super Admin first.', email });
 		}
-		
-		const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+		const { data, error } = await supabase.auth.signUp({ email, password });
 
 		if (error) {
-			return fail(401, { error: 'Invalid email or password.', email });
+			return fail(400, { error: error.message, email });
+		}
+
+		if (!data.session) {
+			return { success: true, email };
 		}
 
 		throw redirect(303, '/modules');

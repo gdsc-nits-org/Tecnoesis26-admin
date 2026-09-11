@@ -10,7 +10,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 	} = await supabase.auth.getUser();
 	event.locals.user = user;
 
-	const isLoginPage = event.url.pathname.startsWith('/login');
+	const isLoginPage = (event.url.pathname.startsWith('/login') || event.url.pathname.startsWith('/register'));
 
 	if (!user && !isLoginPage) {
 		throw redirect(303, '/login');
