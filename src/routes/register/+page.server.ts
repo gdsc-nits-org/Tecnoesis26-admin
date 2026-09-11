@@ -1,6 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { getSupabaseServerClient } from '$lib/supabase';
+import { getSupabaseAdminClient, getSupabaseServerClient } from '$lib/supabase';
 
 export const load: PageServerLoad = async ({ cookies }) => {
 	const supabase = getSupabaseServerClient(cookies);
@@ -31,10 +31,11 @@ export const actions: Actions = {
 		}
 
 		const supabase = getSupabaseServerClient(cookies);
-		const { data: adminRecord, error: adminError } = await supabase
+		const adminSupabase = getSupabaseAdminClient();
+		const { data: adminRecord, error: adminError } = await adminSupabase
 			.from('admins')
 			.select('email')
-			.eq('email', email)
+			.ilike('email', email)
 			.single();
 
 		if (adminError) {

@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { mockUser, mockMerchOrders } from '$lib/mock/data';
+	import { mockMerchOrders } from '$lib/mock/data';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import {
@@ -13,8 +12,6 @@
 	} from '$lib/components/ui/table/index.js';
 	import Download from '@lucide/svelte/icons/download';
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
-
-	if (mockUser.role !== 'super_admin') goto('/modules');
 
 	const tecnoesisCount = mockMerchOrders.filter((o) => o.type === 'Tecnoesis').length;
 	const sparkCount = mockMerchOrders.filter((o) => o.type === 'Spark').length;

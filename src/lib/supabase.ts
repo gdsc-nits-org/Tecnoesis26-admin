@@ -17,9 +17,15 @@ const getRequiredEnv = (key: string) => {
 
 export function getSupabaseServerClient(cookies: Cookies): SupabaseClient {
 	const url = getRequiredEnv('SUPABASE_URL');
-	const anonKey = getRequiredEnv('SUPABASE_ANON_KEY');
+	const publishableKey = env.SUPABASE_PUBLISHABLE_KEY || env.SUPABASE_ANON_KEY;
 
-	return createServerClient(url, anonKey, {
+	if (!publishableKey) {
+		throw new Error(
+			'Missing SUPABASE_PUBLISHABLE_KEY environment variable. Add it to your .env file and restart the dev server.'
+		);
+	}
+
+	return createServerClient(url, publishableKey, {
 		cookies: {
 			getAll: () => cookies.getAll(),
 			setAll: (cookieOptions) => {

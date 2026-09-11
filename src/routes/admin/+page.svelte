@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { mockUser, mockAdminUsers } from '$lib/mock/data';
+	import { enhance } from '$app/forms';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
@@ -18,43 +17,12 @@
 	import Plus from '@lucide/svelte/icons/plus';
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 
-	if (mockUser.role !== 'super_admin') goto('/modules');
-
-	let admins = $state([...mockAdminUsers]);
+	let { data, form } = $props();
 	let newEmail = $state('');
 	let newRole = $state<'admin' | 'super_admin'>('admin');
 	let adding = $state(false);
-
-	function handleAdd() {
-		if (!newEmail) return;
-		admins = [
-			...admins,
-			{
-				id: `usr-${Date.now()}`,
-				email: newEmail,
-				role: newRole,
-				createdAt: new Date().toISOString().split('T')[0]
-			}
-		];
-		newEmail = '';
-		newRole = 'admin';
-		adding = false;
-	}
-
-	function handleRemove(id: string) {
-		admins = admins.filter((a) => a.id !== id);
-	}
-
-	function handleToggleRole(id: string) {
-		admins = admins.map((a) =>
-			a.id === id
-				? {
-						...a,
-						role: a.role === 'super_admin' ? 'admin' : ('super_admin' as 'admin' | 'super_admin')
-					}
-				: a
-		);
-	}
+	let submitting = $state(false);
+	let currentEmail = $derived(data.user?.email?.toLowerCase());
 </script>
 
 <svelte:head>
@@ -77,34 +45,41 @@
 		</Button>
 	</div>
 
+	{#if form?.error}
+		<p class="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{form.error}</p>
+	{:else if form?.success}
+		<p class="mb-4 rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">{form.success}</p>
+	{/if}
+
 	{#if adding}
 		<div class="mb-6 rounded-lg border p-4">
 			<p class="mb-3 text-sm font-medium">New Admin</p>
-			<div class="flex flex-wrap items-end gap-3">
+			<form
+				method="POST"
+				action="?/addAdmin"
+				class="flex flex-wrap items-end gap-3"
+				use:enhance={() => {
+					submitting = true;
+					return async ({ update }) => {
+						await update();
+						submitting = false;
+					};
+				}}
+			>
 				<div class="space-y-1.5">
 					<Label for="email">Email</Label>
-					<Input
-						id="email"
-						type="email"
-						bind:value={newEmail}
-						placeholder="admin@tecnoesis.club"
-						class="w-64"
-					/>
+					<Input id="email" name="email" type="email" bind:value={newEmail} placeholder="admin@tecnoesis.club" class="w-64" required />
 				</div>
 				<div class="space-y-1.5">
 					<Label for="role">Role</Label>
-					<select
-						id="role"
-						bind:value={newRole}
-						class="flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
-					>
+					<select id="role" name="role" bind:value={newRole} class="flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs">
 						<option value="admin">Admin</option>
 						<option value="super_admin">Super Admin</option>
 					</select>
 				</div>
-				<Button onclick={handleAdd} disabled={!newEmail} size="sm">Add</Button>
-				<Button variant="ghost" size="sm" onclick={() => (adding = false)}>Cancel</Button>
-			</div>
+				<Button type="submit" disabled={submitting} size="sm">{submitting ? 'Adding...' : 'Add'}</Button>
+				<Button type="button" variant="ghost" size="sm" onclick={() => (adding = false)}>Cancel</Button>
+			</form>
 		</div>
 	{/if}
 
@@ -114,12 +89,11 @@
 				<TableRow>
 					<TableHead>Email</TableHead>
 					<TableHead>Role</TableHead>
-					<TableHead>Added</TableHead>
 					<TableHead class="text-right">Actions</TableHead>
 				</TableRow>
 			</TableHeader>
 			<TableBody>
-				{#each admins as admin}
+				{#each data.admins as admin (admin.email)}
 					<TableRow>
 						<TableCell class="font-medium">{admin.email}</TableCell>
 						<TableCell>
@@ -130,30 +104,30 @@
 								{admin.role === 'super_admin' ? 'Super Admin' : 'Admin'}
 							</Badge>
 						</TableCell>
-						<TableCell class="text-sm text-muted-foreground">{admin.createdAt}</TableCell>
 						<TableCell class="text-right">
-							<div class="flex items-center justify-end gap-2">
-								{#if admin.id !== mockUser.id}
-									<Button
-										variant="ghost"
-										size="sm"
-										onclick={() => handleToggleRole(admin.id)}
-										class="text-xs"
-									>
-										Make {admin.role === 'super_admin' ? 'Admin' : 'Super Admin'}
-									</Button>
-									<Button
-										variant="ghost"
-										size="sm"
-										onclick={() => handleRemove(admin.id)}
-										class="text-destructive hover:text-destructive"
-									>
-										<Trash2 class="size-3.5" />
-									</Button>
-								{:else}
-									<span class="text-xs text-muted-foreground">You</span>
-								{/if}
-							</div>
+							{#if admin.email.toLowerCase() === currentEmail}
+								<span class="text-xs text-muted-foreground">You</span>
+							{:else}
+								<div class="flex items-center justify-end gap-2">
+									<form method="POST" action="?/updateRole" use:enhance>
+										<input type="hidden" name="email" value={admin.email} />
+										<input
+											type="hidden"
+											name="role"
+											value={admin.role === 'super_admin' ? 'admin' : 'super_admin'}
+										/>
+										<Button type="submit" variant="ghost" size="sm" class="text-xs">
+											Make {admin.role === 'super_admin' ? 'Admin' : 'Super Admin'}
+										</Button>
+									</form>
+									<form method="POST" action="?/removeAdmin" use:enhance>
+										<input type="hidden" name="email" value={admin.email} />
+										<Button type="submit" variant="ghost" size="sm" class="text-destructive hover:text-destructive">
+											<Trash2 class="size-3.5" />
+										</Button>
+									</form>
+								</div>
+							{/if}
 						</TableCell>
 					</TableRow>
 				{/each}

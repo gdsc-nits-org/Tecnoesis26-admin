@@ -1,13 +1,12 @@
+import { error } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
 
-export const load: LayoutServerLoad = async ({ cookies }) => {
-	const devRole = cookies.get('dev_role') || 'admin';
-	return {
-		user: {
-			id: '1',
-			email: devRole === 'super_admin' ? 'superadmin@tecnoesis.club' : 'admin@tecnoesis.club',
-			name: 'tecno.dev',
-			role: devRole
-		}
-	};
+export const load: LayoutServerLoad = async ({ parent }) => {
+	const { user } = await parent();
+
+	if (!user?.email || user.role !== 'super_admin') {
+		throw error(403, 'Only super admins can manage admin users.');
+	}
+
+	return { user };
 };
