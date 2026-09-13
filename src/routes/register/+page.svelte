@@ -40,19 +40,21 @@
 				</div>
 				<div class="space-y-1.5">
 					<Label for="password">Password</Label>
-					<Input id="password" name="password" type="password" bind:value={password} minlength={6} required />
+					<Input id="password" name="password" type="password" minlength={8} maxlength={16} bind:value={password} required />
 				</div>
 				<div class="space-y-1.5">
 					<Label for="confirmPassword">Confirm password</Label>
-					<Input id="confirmPassword" name="confirmPassword" type="password" bind:value={confirmPassword} minlength={6} required />
+					<Input id="confirmPassword" name="confirmPassword" type="password" minlength={8} maxlength={16} bind:value={confirmPassword} required />
+					<p class="text-xs text-muted-foreground">8–16 characters with uppercase, lowercase, number, and special character.</p>
 				</div>
 
-				{#if form?.success}
-					<p class="rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
-						Registration successful. Check your email to confirm your account, then sign in.
+				{#if form?.error}
+					<p class="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+						{form.error}
+						{#if form.error.includes('already registered')}
+							<a class="ml-1 font-medium underline" href="/login">Log in</a>
+						{/if}
 					</p>
-				{:else if form?.error}
-					<p class="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{form.error}</p>
 				{/if}
 
 				<Button type="submit" class="w-full" disabled={loading}>

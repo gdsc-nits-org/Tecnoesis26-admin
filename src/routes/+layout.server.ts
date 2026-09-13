@@ -1,5 +1,6 @@
 import type { LayoutServerLoad } from './$types';
-import { getSupabaseAdminClient, getSupabaseServerClient } from '$lib/supabase';
+import { getSupabaseServerClient } from '$lib/supabase';
+import { findAdminByEmail } from '$lib/server/admin';
 
 export const load: LayoutServerLoad = async ({ cookies }) => {
 	const supabase = getSupabaseServerClient(cookies);
@@ -7,12 +8,7 @@ export const load: LayoutServerLoad = async ({ cookies }) => {
 	let user = data.user;
 
 	if (user?.email) {
-		const adminSupabase = getSupabaseAdminClient();
-		const { data: admin } = await adminSupabase
-			.from('admins')
-			.select('role')
-			.ilike('email', user.email.toLowerCase())
-			.maybeSingle();
+		const { admin } = await findAdminByEmail(user.email);
 
 		user = user ? { ...user, role: admin?.role ?? null } : null;
 	}

@@ -1,6 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { getSupabaseAdminClient, getSupabaseServerClient } from '$lib/supabase';
+import { getSupabaseServerClient } from '$lib/supabase';
+import { findAdminByEmail } from '$lib/server/admin';
 
 export const load: PageServerLoad = async ({ cookies }) => {
 	const supabase = getSupabaseServerClient(cookies);
@@ -21,15 +22,11 @@ export const actions: Actions = {
 		if (!email || !password) return fail(400, { error: 'Email and password are required.', email });
 
 		const supabase = getSupabaseServerClient(cookies);
-		const adminSupabase = getSupabaseAdminClient();
-		const { data: adminRecord, error: adminError } = await adminSupabase
-			.from('admins')
-			.select('email')
-			.ilike('email', email)
-			.single();
+		const { admin: adminRecord, error: adminError } = await findAdminByEmail(email);
 
 		if (adminError) {
 			console.error('Supabase Query Error:', adminError);
+			return fail(500, { error: 'Unable to verify admin access. Please try again later.', email });
 		}
 
 		if (!adminRecord) {
