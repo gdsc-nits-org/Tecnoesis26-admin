@@ -41,7 +41,7 @@
 	<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
 		{#each visibleModules as mod}
 			<a
-				href="/modules/{mod.id}"
+				href="/modules/{mod.module_id}"
 				class="group overflow-hidden rounded-lg border transition hover:shadow-md"
 			>
 				<div class="relative h-32">

@@ -1,104 +1,58 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { getSupabaseServerClient } from '$lib/supabase';
-import { uploadImageToCloudinary } from '$lib/server/cloudinary';
+import { requireModuleAccess } from '$lib/server/admin';
 
-export const load: PageServerLoad = async ({ cookies, url }) => {
-	const supabase = getSupabaseServerClient(cookies);
-	const eventId = url.searchParams.get('eventId');
-
-	if (!eventId) throw redirect(303, '/modules');
-
-	const { data: event, error } = await supabase
-		.from('events')
-		.select('*')
-		.eq('id', eventId)
-		.single();
-
-	if (error || !event) {
-		console.error('Error fetching event:', error);
-		throw redirect(303, '/modules');
+export const load: PageServerLoad = async ({ locals, params }) => {
+	const { module } = await requireModuleAccess(locals, params.module);
+	if (locals.user?.role !== 'super_admin') {
+		throw redirect(303, `/modules/${params.module}`);
 	}
-
-	return { event };
+	return { module };
 };
 
 export const actions: Actions = {
-	updateDetails: async ({ request, cookies }) => {
-		const supabase = getSupabaseServerClient(cookies);
+	updateDetails: async ({ request, locals, params }) => {
+		const { supabase } = await requireModuleAccess(locals, params.module);
+		if (locals.user?.role !== 'super_admin') {
+			return fail(403, { error: 'You are not allowed to edit this module.' });
+		}
 		const formData = await request.formData();
+		const moduleId = String(formData.get('moduleId') ?? '').trim();
+		const email = String(formData.get('email') ?? '').trim().toLowerCase();
+		const name = String(formData.get('name') ?? '').trim();
 
-		// Read eventId from the hidden form field, not the URL
-		const eventId = formData.get('eventId') as string;
-
-		if (!eventId) return fail(400, { error: 'Event ID missing.' });
+		if (!moduleId || !email || !name) return fail(400, { error: 'Name, route name, and email are required.' });
 
 		const { error } = await supabase
-			.from('events')
+			.from('modules')
 			.update({
-				name: formData.get('name'),
-				description: formData.get('description'),
-				venue: formData.get('venue'),
-				min_team_size: parseInt(formData.get('minTeamSize') as string) || 1,
-				max_team_size: parseInt(formData.get('maxTeamSize') as string) || 4,
-				registration_end_time: formData.get('registrationEndTime'),
-				prize_description: formData.get('prizeDescription'),
-				stages_description: formData.get('stagesDescription')
+				module_id: moduleId,
+				name,
+				email,
+				description: String(formData.get('description') ?? '').trim() || null,
+				third_party_url: String(formData.get('thirdPartyUrl') ?? '').trim() || null,
+				admin_editable: formData.get('adminEditable') === 'on',
+				can_create_events: formData.get('canCreateEvents') === 'on'
 			})
-			.eq('id', eventId);
+			.eq('module_id', params.module);
 
 		if (error) {
 			console.error('Update error:', error);
-			return fail(500, { error: 'Failed to update event details.' });
+			return fail(500, { error: 'Failed to update module details.' });
+		}
+
+		if (moduleId !== params.module) {
+			const { error: eventError } = await supabase
+				.from('events')
+				.update({ module_id: moduleId })
+				.eq('module_id', params.module);
+
+			if (eventError) {
+				console.error('Event module route update failed:', eventError);
+				return fail(500, { error: 'Module updated, but related events could not be moved.' });
+			}
 		}
 
 		return { success: true };
-	},
-
-	updateImage: async ({ request, cookies }) => {
-		const supabase = getSupabaseServerClient(cookies);
-		const formData = await request.formData();
-
-		// Read eventId from the hidden form field, not the URL
-		const eventId = formData.get('eventId') as string;
-		const imageType = formData.get('imageType') as 'banner' | 'poster';
-		const file = formData.get('image') as File;
-
-		if (!eventId) return fail(400, { error: 'Event ID missing.' });
-		if (!file || file.size === 0) return fail(400, { error: 'No file provided.' });
-
-		try {
-			const imageUrl = await uploadImageToCloudinary(file);
-			const updateData =
-				imageType === 'banner' ? { banner_image: imageUrl } : { poster_image: imageUrl };
-
-			const { error } = await supabase.from('events').update(updateData).eq('id', eventId);
-
-			if (error) throw error;
-			return { success: true };
-		} catch (err) {
-			console.error('Image upload error:', err);
-			return fail(500, { error: 'Failed to upload and save image.' });
-		}
-	},
-
-	deleteEvent: async ({ request, cookies, params }) => {
-		const supabase = getSupabaseServerClient(cookies);
-		const formData = await request.formData();
-
-		// Read eventId from the hidden form field, not the URL
-		const eventId = formData.get('eventId') as string;
-		const moduleId = params.module;
-
-		if (!eventId) return fail(400, { error: 'Event ID missing.' });
-
-		const { error } = await supabase.from('events').delete().eq('id', eventId);
-
-		if (error) {
-			console.error('Delete error:', error);
-			return fail(500, { error: 'Failed to delete event.' });
-		}
-
-		throw redirect(303, `/modules/${moduleId}`);
 	}
 };

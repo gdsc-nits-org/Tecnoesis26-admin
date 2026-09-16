@@ -1,38 +1,42 @@
 import type { Actions, PageServerLoad } from './$types';
-import { getSupabaseAdminClient } from '$lib/supabase';
 import { error, redirect } from '@sveltejs/kit';
+import { requireModuleAccess, requireSuperAdmin } from '$lib/server/admin';
 
-export const load: PageServerLoad = async ({ params }) => {
-	const supabase = getSupabaseAdminClient();
-	const moduleId = params.module;
+export const load: PageServerLoad = async ({ params, locals }) => {
+	const { supabase, module: moduleData, isSuperAdmin, hasModuleAccess, email } = await requireModuleAccess(locals, params.module);
 
-	const { data: moduleData, error: moduleError } = await supabase
-		.from('modules')
+	const { data: events, error: eventsError } = await supabase
+		.from('events')
 		.select('*')
-		.eq('id', moduleId)
-		.single();
+		.eq('module_id', params.module)
+		.order('created_at', { ascending: false });
 
-	if (moduleError || !moduleData) {
-		throw error(404, 'Module not found.');
+	if (eventsError) {
+		console.error('Event lookup failed:', eventsError);
+		throw error(500, 'Failed to load module events.');
 	}
 
-	const { data: events } = await supabase.from('events').select('*').eq('module_id', moduleId);
+	const visibleEvents = isSuperAdmin || hasModuleAccess
+		? events ?? []
+		: (events ?? []).filter((event) => event.email?.trim().toLowerCase() === email);
 
 	return {
 		module: moduleData,
-		events: events ?? []
+		events: visibleEvents,
+		isSuperAdmin,
+		hasModuleAccess
 	};
 };
 
 export const actions: Actions = {
-	deleteModule: async ({ params }) => {
-		const supabase = getSupabaseAdminClient();
+	deleteModule: async ({ params, locals }) => {
+		const { supabase } = await requireSuperAdmin(locals);
 		const moduleId = params.module;
 
 		// Delete all events in module first to avoid FK constraint errors
 		await supabase.from('events').delete().eq('module_id', moduleId);
 
-		const { error: dbError } = await supabase.from('modules').delete().eq('id', moduleId);
+		const { error: dbError } = await supabase.from('modules').delete().eq('module_id', moduleId);
 
 		if (dbError) {
 			console.error('Delete module error:', dbError);

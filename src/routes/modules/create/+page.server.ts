@@ -2,18 +2,23 @@ import { fail, redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
 import { getSupabaseAdminClient } from '$lib/supabase';
 import { uploadImageToCloudinary } from '$lib/server/cloudinary';
+import { requireSuperAdmin } from '$lib/server/admin';
 
 export const actions: Actions = {
-	create: async ({ request }) => {
-		const supabase = getSupabaseAdminClient();
+	create: async ({ request, locals }) => {
+		const { supabase } = await requireSuperAdmin(locals);
 		const formData = await request.formData();
 
-		const name = formData.get('name') as string;
-		const description = formData.get('description') as string;
-		const thirdPartyUrl = formData.get('thirdPartyUrl') as string;
+		const name = String(formData.get('name') ?? '').trim();
+		const moduleId = String(formData.get('moduleId') ?? '').trim();
+		const email = String(formData.get('email') ?? '').trim().toLowerCase();
+		const description = String(formData.get('description') ?? '').trim();
+		const thirdPartyUrl = String(formData.get('thirdPartyUrl') ?? '').trim();
+		const adminEditable = formData.get('adminEditable') === 'on';
+		const canCreateEvents = formData.get('canCreateEvents') === 'on';
 
-		if (!name) {
-			return fail(400, { error: 'Module name is required.' });
+		if (!name || !moduleId || !email) {
+			return fail(400, { error: 'Name, route name, and admin email are required.' });
 		}
 
 		const coverFile = formData.get('coverImage') as File | null;
@@ -27,12 +32,17 @@ export const actions: Actions = {
 			console.error('Image upload failed:', err);
 			return fail(500, { error: 'Failed to upload image. Check Cloudinary config.' });
 		}
+		if (!coverImage) return fail(400, { error: 'A cover image is required.' });
 
 		const { error: dbError } = await supabase.from('modules').insert({
 			name,
+			module_id: moduleId,
+			email,
 			description: description || null,
 			cover_image: coverImage,
-			third_party_url: thirdPartyUrl || null
+			third_party_url: thirdPartyUrl || null,
+			admin_editable: adminEditable,
+			can_create_events: canCreateEvents
 		});
 
 		if (dbError) {

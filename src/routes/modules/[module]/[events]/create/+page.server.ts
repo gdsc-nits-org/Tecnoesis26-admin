@@ -4,11 +4,9 @@ import { uploadImageToCloudinary } from '$lib/server/cloudinary';
 import { requireModuleAccess } from '$lib/server/admin';
 
 export const actions: Actions = {
-	create: async ({ request, cookies, params, locals }) => {
+	create: async ({ request, params, locals }) => {
 		const { supabase, hasModuleAccess } = await requireModuleAccess(locals, params.module);
-		if (!hasModuleAccess) {
-			return fail(403, { error: 'You are not allowed to create events in this module.' });
-		}
+		if (!hasModuleAccess) return fail(403, { error: 'Only admins with module access can create events.' });
 		const moduleId = params.module;
 		const formData = await request.formData();
 
@@ -24,10 +22,6 @@ export const actions: Actions = {
 		const registrationEndTime = formData.get('registrationEndTime') as string;
 		const prizeDescription = formData.get('prizeDescription') as string;
 		const stagesDescription = formData.get('stagesDescription') as string;
-
-		if (!eventId || !name || !venue || !registrationEndTime) {
-			return fail(400, { error: 'Event route name, name, venue, and registration date are required.' });
-		}
 
 		// Handle Image Uploads
 		const posterFile = formData.get('poster') as File | null;
@@ -48,7 +42,10 @@ export const actions: Actions = {
 			return fail(500, { error: 'Failed to upload images to Cloudinary.' });
 		}
 
-		// Insert into Supabase
+		if (!eventId || !name || !venue || !registrationEndTime) {
+			return fail(400, { error: 'Event route name, name, venue, and registration date are required.' });
+		}
+
 		const { error: dbError } = await supabase.from('events').insert({
 			module_id: moduleId,
 			event_id: eventId,

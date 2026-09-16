@@ -1,6 +1,7 @@
 import type { LayoutServerLoad } from './$types';
 import { getSupabaseServerClient } from '$lib/supabase';
 import { findAdminByEmail } from '$lib/server/admin';
+import { error as kitError } from '@sveltejs/kit';
 
 export const load: LayoutServerLoad = async ({ cookies }) => {
 	const supabase = getSupabaseServerClient(cookies);
@@ -8,9 +9,14 @@ export const load: LayoutServerLoad = async ({ cookies }) => {
 	let user = data.user;
 
 	if (user?.email) {
-		const { admin } = await findAdminByEmail(user.email);
+		const { admin, error: adminError } = await findAdminByEmail(user.email);
 
-		user = user ? { ...user, role: admin?.role ?? null } : null;
+		if (adminError) {
+			console.error('Admin role lookup failed:', adminError);
+			throw kitError(500, 'Unable to verify admin permissions.');
+		}
+
+		user = user ? { ...user, role: admin?.role ?? undefined } : null;
 	}
 
 	return {

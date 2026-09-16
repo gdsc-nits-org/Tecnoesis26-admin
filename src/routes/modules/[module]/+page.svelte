@@ -14,6 +14,8 @@
 	let currentModule = $derived(data.module);
 	let moduleEvents = $derived(data.events ?? []);
 	let moduleId = $derived($page.params.module);
+	let isSuperAdmin = $derived(data.isSuperAdmin);
+	let hasModuleAccess = $derived(data.hasModuleAccess);
 </script>
 
 <svelte:head>
@@ -31,7 +33,11 @@
 	</div>
 
 	<div class="flex items-center gap-2">
+		{#if isSuperAdmin}
+			<Button href="/modules/{moduleId}/edit" variant="outline" size="sm">Edit Module</Button>
+		{/if}
 		<!-- Delete Module -->
+		{#if isSuperAdmin}
 		<form method="POST" action="?/deleteModule" use:enhance>
 			<Button
 				type="submit"
@@ -47,12 +53,15 @@
 				Delete Module
 			</Button>
 		</form>
+		{/if}
 
 		<!-- Create Event -->
-		<Button href="/modules/{moduleId}/create" size="sm" class="gap-1.5">
-			<Plus class="size-3.5" />
-			Create Event
-		</Button>
+		{#if hasModuleAccess}
+			<Button href="/modules/{moduleId}/create" size="sm" class="gap-1.5">
+				<Plus class="size-3.5" />
+				Create Event
+			</Button>
+		{/if}
 	</div>
 </div>
 
@@ -97,7 +106,7 @@
 					>
 						Registrations
 					</Button>
-					<Button href="/modules/{moduleId}/edit?eventId={event.id}" class="w-full">
+					<Button href="/modules/{moduleId}/{event.event_id ?? event.id}/edit" class="w-full">
 						Edit Event
 					</Button>
 				</div>

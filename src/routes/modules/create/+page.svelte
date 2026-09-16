@@ -62,6 +62,17 @@
 		<Input id="name" name="name" required placeholder="e.g. Technical" />
 	</div>
 
+	<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+		<div class="space-y-1.5">
+			<Label for="moduleId">Route Name *</Label>
+			<Input id="moduleId" name="moduleId" required pattern="[a-z0-9-]+" placeholder="e.g. technical" />
+		</div>
+		<div class="space-y-1.5">
+			<Label for="email">Assigned Admin Email *</Label>
+			<Input id="email" name="email" type="email" required placeholder="admin@example.com" />
+		</div>
+	</div>
+
 	<div class="space-y-1.5">
 		<Label for="description">Description</Label>
 		<Textarea
@@ -70,6 +81,17 @@
 			rows={3}
 			placeholder="What does this module cover?"
 		/>
+	</div>
+
+	<div class="space-y-3 rounded-lg border p-4">
+		<label class="flex items-center gap-2 text-sm">
+			<input type="checkbox" name="adminEditable" />
+			Allow the assigned admin to edit this module
+		</label>
+		<label class="flex items-center gap-2 text-sm">
+			<input type="checkbox" name="canCreateEvents" />
+			Allow the assigned admin to create events
+		</label>
 	</div>
 
 	<!-- Cover Image Upload -->
