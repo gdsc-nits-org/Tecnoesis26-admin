@@ -19,7 +19,7 @@
 
 	let { data, form } = $props();
 	let newEmail = $state('');
-	let newRole = $state<'admin' | 'super_admin'>('admin');
+	let newRole = $state<'admin' | 'executive' | 'super_admin'>('admin');
 	let adding = $state(false);
 	let submitting = $state(false);
 	let currentEmail = $derived(data.user?.email?.toLowerCase());
@@ -46,9 +46,13 @@
 	</div>
 
 	{#if form?.error}
-		<p class="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{form.error}</p>
+		<p class="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+			{form.error}
+		</p>
 	{:else if form?.success}
-		<p class="mb-4 rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">{form.success}</p>
+		<p class="mb-4 rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
+			{form.success}
+		</p>
 	{/if}
 
 	{#if adding}
@@ -68,17 +72,35 @@
 			>
 				<div class="space-y-1.5">
 					<Label for="email">Email</Label>
-					<Input id="email" name="email" type="email" bind:value={newEmail} placeholder="admin@tecnoesis.club" class="w-64" required />
+					<Input
+						id="email"
+						name="email"
+						type="email"
+						bind:value={newEmail}
+						placeholder="admin@tecnoesis.club"
+						class="w-64"
+						required
+					/>
 				</div>
 				<div class="space-y-1.5">
 					<Label for="role">Role</Label>
-					<select id="role" name="role" bind:value={newRole} class="flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs">
+					<select
+						id="role"
+						name="role"
+						bind:value={newRole}
+						class="flex h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
+					>
 						<option value="admin">Admin</option>
+						<option value="executive">Executive</option>
 						<option value="super_admin">Super Admin</option>
 					</select>
 				</div>
-				<Button type="submit" disabled={submitting} size="sm">{submitting ? 'Adding...' : 'Add'}</Button>
-				<Button type="button" variant="ghost" size="sm" onclick={() => (adding = false)}>Cancel</Button>
+				<Button type="submit" disabled={submitting} size="sm"
+					>{submitting ? 'Adding...' : 'Add'}</Button
+				>
+				<Button type="button" variant="ghost" size="sm" onclick={() => (adding = false)}
+					>Cancel</Button
+				>
 			</form>
 		</div>
 	{/if}
@@ -101,7 +123,11 @@
 								{#if admin.role === 'super_admin'}
 									<ShieldCheck class="size-3" />
 								{/if}
-								{admin.role === 'super_admin' ? 'Super Admin' : 'Admin'}
+								{admin.role === 'super_admin'
+									? 'Super Admin'
+									: admin.role === 'executive'
+										? 'Executive'
+										: 'Admin'}
 							</Badge>
 						</TableCell>
 						<TableCell class="text-right">
@@ -111,18 +137,25 @@
 								<div class="flex items-center justify-end gap-2">
 									<form method="POST" action="?/updateRole" use:enhance>
 										<input type="hidden" name="email" value={admin.email} />
-										<input
-											type="hidden"
+										<select
 											name="role"
-											value={admin.role === 'super_admin' ? 'admin' : 'super_admin'}
-										/>
-										<Button type="submit" variant="ghost" size="sm" class="text-xs">
-											Make {admin.role === 'super_admin' ? 'Admin' : 'Super Admin'}
-										</Button>
+											value={admin.role}
+											class="h-8 rounded-md border border-input bg-transparent px-2 text-xs"
+										>
+											<option value="admin">Admin</option>
+											<option value="executive">Executive</option>
+											<option value="super_admin">Super Admin</option>
+										</select>
+										<Button type="submit" variant="ghost" size="sm" class="text-xs">Save</Button>
 									</form>
 									<form method="POST" action="?/removeAdmin" use:enhance>
 										<input type="hidden" name="email" value={admin.email} />
-										<Button type="submit" variant="ghost" size="sm" class="text-destructive hover:text-destructive">
+										<Button
+											type="submit"
+											variant="ghost"
+											size="sm"
+											class="text-destructive hover:text-destructive"
+										>
 											<Trash2 class="size-3.5" />
 										</Button>
 									</form>

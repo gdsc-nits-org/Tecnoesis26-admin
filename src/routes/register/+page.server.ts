@@ -31,14 +31,17 @@ export const load: PageServerLoad = async ({ cookies }) => {
 	const { data } = await supabase.auth.getUser();
 
 	if (data.user) {
-		throw redirect(303, '/modules');
+		const { admin } = await findAdminByEmail(data.user.email ?? '');
+		throw redirect(303, admin?.role === 'executive' ? '/merch' : '/modules');
 	}
 };
 
 export const actions: Actions = {
 	default: async ({ request, cookies }) => {
 		const formData = await request.formData();
-		const email = String(formData.get('email') ?? '').trim().toLowerCase();
+		const email = String(formData.get('email') ?? '')
+			.trim()
+			.toLowerCase();
 		const password = String(formData.get('password') ?? '');
 		const confirmPassword = String(formData.get('confirmPassword') ?? '');
 
@@ -52,7 +55,8 @@ export const actions: Actions = {
 
 		if (!PASSWORD_PATTERN.test(password)) {
 			return fail(400, {
-				error: 'Password must be 8-16 characters and include uppercase, lowercase, number, and special character.',
+				error:
+					'Password must be 8-16 characters and include uppercase, lowercase, number, and special character.',
 				email
 			});
 		}
@@ -76,7 +80,10 @@ export const actions: Actions = {
 		}
 
 		if (!adminRecord) {
-			return fail(403, { error: 'Access denied. You must be added by a Super Admin first.', email });
+			return fail(403, {
+				error: 'Access denied. You must be added by a Super Admin first.',
+				email
+			});
 		}
 
 		const { error: createError } = await adminSupabase.auth.admin.createUser({
@@ -100,6 +107,6 @@ export const actions: Actions = {
 			});
 		}
 
-		throw redirect(303, '/modules');
+		throw redirect(303, adminRecord.role === 'executive' ? '/merch' : '/modules');
 	}
 };

@@ -2,7 +2,7 @@ import { fail, error } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { getSupabaseAdminClient } from '$lib/supabase';
 
-type AdminRole = 'admin' | 'super_admin';
+type AdminRole = 'admin' | 'executive' | 'super_admin';
 
 const getAuthorizedAdminClient = async (locals: App.Locals) => {
 	const email = locals.user?.email?.trim().toLowerCase();
@@ -49,14 +49,16 @@ export const actions: Actions = {
 	addAdmin: async ({ request, locals }) => {
 		const { supabase } = await getAuthorizedAdminClient(locals);
 		const formData = await request.formData();
-		const email = String(formData.get('email') ?? '').trim().toLowerCase();
+		const email = String(formData.get('email') ?? '')
+			.trim()
+			.toLowerCase();
 		const role = String(formData.get('role') ?? 'admin') as AdminRole;
 
 		if (!email || !email.includes('@')) {
 			return fail(400, { error: 'A valid email address is required.' });
 		}
 
-		if (role !== 'admin' && role !== 'super_admin') {
+		if (role !== 'admin' && role !== 'executive' && role !== 'super_admin') {
 			return fail(400, { error: 'Invalid admin role.' });
 		}
 
@@ -65,7 +67,8 @@ export const actions: Actions = {
 		if (insertError) {
 			console.error('Admin insert failed:', insertError);
 			return fail(insertError.code === '23505' ? 409 : 500, {
-				error: insertError.code === '23505' ? 'This email is already an admin.' : 'Failed to add admin.'
+				error:
+					insertError.code === '23505' ? 'This email is already an admin.' : 'Failed to add admin.'
 			});
 		}
 
@@ -75,7 +78,9 @@ export const actions: Actions = {
 	removeAdmin: async ({ request, locals }) => {
 		const { supabase, email: currentEmail } = await getAuthorizedAdminClient(locals);
 		const formData = await request.formData();
-		const email = String(formData.get('email') ?? '').trim().toLowerCase();
+		const email = String(formData.get('email') ?? '')
+			.trim()
+			.toLowerCase();
 
 		if (!email || email === currentEmail) {
 			return fail(400, { error: 'You cannot remove your own admin access.' });
@@ -94,14 +99,16 @@ export const actions: Actions = {
 	updateRole: async ({ request, locals }) => {
 		const { supabase, email: currentEmail } = await getAuthorizedAdminClient(locals);
 		const formData = await request.formData();
-		const email = String(formData.get('email') ?? '').trim().toLowerCase();
+		const email = String(formData.get('email') ?? '')
+			.trim()
+			.toLowerCase();
 		const role = String(formData.get('role') ?? '') as AdminRole;
 
 		if (!email || email === currentEmail) {
 			return fail(400, { error: 'You cannot change your own admin role.' });
 		}
 
-		if (role !== 'admin' && role !== 'super_admin') {
+		if (role !== 'admin' && role !== 'executive' && role !== 'super_admin') {
 			return fail(400, { error: 'Invalid admin role.' });
 		}
 

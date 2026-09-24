@@ -1,7 +1,20 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { uploadImageToCloudinary } from '$lib/server/cloudinary';
+import {
+	deleteFromCloudinary,
+	uploadImageToCloudinary,
+	uploadPdfToCloudinary
+} from '$lib/server/cloudinary';
 import { requireEventAccess } from '$lib/server/admin';
+
+type EventDocument = {
+	name: string;
+	url: string;
+	public_id: string;
+};
+
+const getEventDocuments = (value: unknown): EventDocument[] =>
+	Array.isArray(value) ? (value as EventDocument[]) : [];
 
 export const load: PageServerLoad = async ({ locals, params, url }) => {
 	const eventId = params.events || url.searchParams.get('eventId');
@@ -70,6 +83,67 @@ export const actions: Actions = {
 		} catch (err) {
 			console.error('Image upload error:', err);
 			return fail(500, { error: 'Failed to upload and save image.' });
+		}
+	},
+
+	uploadDocument: async ({ request, locals, params, url }) => {
+		const formData = await request.formData();
+		const eventId = String(formData.get('eventId') ?? params.events ?? url.searchParams.get('eventId') ?? '');
+		const file = formData.get('document');
+
+		if (!eventId) return fail(400, { error: 'Event ID missing.' });
+		if (!(file instanceof File) || file.size === 0) return fail(400, { error: 'No PDF provided.' });
+		if (file.type !== 'application/pdf' || !file.name.toLowerCase().endsWith('.pdf')) {
+			return fail(400, { error: 'Only PDF files are allowed.' });
+		}
+		if (file.size > 10 * 1024 * 1024) return fail(400, { error: 'PDF files must be 10 MB or smaller.' });
+
+		const { supabase, event } = await requireEventAccess(locals, params.module, eventId);
+		const documents = getEventDocuments(event.documents);
+
+		try {
+			const upload = await uploadPdfToCloudinary(file);
+			const { error } = await supabase
+				.from('events')
+				.update({
+					documents: [...documents, { name: file.name, url: upload.secureUrl, public_id: upload.publicId }]
+				})
+				.eq('id', event.id);
+
+			if (error) {
+				await deleteFromCloudinary(upload.publicId, 'raw');
+				throw error;
+			}
+			return { success: true };
+		} catch (err) {
+			console.error('PDF upload error:', err);
+			return fail(500, { error: 'Failed to upload and save PDF.' });
+		}
+	},
+
+	deleteDocument: async ({ request, locals, params, url }) => {
+		const formData = await request.formData();
+		const eventId = String(formData.get('eventId') ?? params.events ?? url.searchParams.get('eventId') ?? '');
+		const publicId = String(formData.get('publicId') ?? '');
+
+		if (!eventId || !publicId) return fail(400, { error: 'Document details missing.' });
+		const { supabase, event } = await requireEventAccess(locals, params.module, eventId);
+		const documents = getEventDocuments(event.documents);
+		const document = documents.find((item) => item.public_id === publicId);
+		if (!document) return fail(404, { error: 'Document not found.' });
+
+		try {
+			await deleteFromCloudinary(publicId, 'raw');
+			const { error } = await supabase
+				.from('events')
+				.update({ documents: documents.filter((item) => item.public_id !== publicId) })
+				.eq('id', event.id);
+
+			if (error) throw error;
+			return { success: true };
+		} catch (err) {
+			console.error('PDF deletion error:', err);
+			return fail(500, { error: 'Failed to delete PDF.' });
 		}
 	},
 

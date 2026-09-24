@@ -1,11 +1,15 @@
 import { getSupabaseAdminClient } from '$lib/supabase';
 import { error } from '@sveltejs/kit';
 
-export type AdminRole = 'admin' | 'super_admin';
+export type AdminRole = 'admin' | 'executive' | 'super_admin';
 
 export function normalizeAdminRole(role: unknown): AdminRole | null {
-	const normalized = String(role ?? '').trim().toLowerCase().replace(/[ -]/g, '_');
+	const normalized = String(role ?? '')
+		.trim()
+		.toLowerCase()
+		.replace(/[ -]/g, '_');
 	if (normalized === 'superadmin' || normalized === 'super_admin') return 'super_admin';
+	if (normalized === 'executive') return 'executive';
 	if (normalized === 'admin') return 'admin';
 	return null;
 }
@@ -35,7 +39,10 @@ export async function requireSuperAdmin(locals: App.Locals) {
 		throw error(403, 'Only super admins can manage modules.');
 	}
 
-	return { supabase: getSupabaseAdminClient(), email: locals.user.email?.trim().toLowerCase() ?? '' };
+	return {
+		supabase: getSupabaseAdminClient(),
+		email: locals.user.email?.trim().toLowerCase() ?? ''
+	};
 }
 
 export async function requireModuleAccess(locals: App.Locals, moduleId: string) {
@@ -78,7 +85,8 @@ export async function requireModuleAccess(locals: App.Locals, moduleId: string) 
 		hasEventAccess = Boolean(assignedEvent);
 	}
 
-	if (!hasModuleAccess && !hasEventAccess) throw error(403, 'You are not authorized to access this module.');
+	if (!hasModuleAccess && !hasEventAccess)
+		throw error(403, 'You are not authorized to access this module.');
 
 	return { supabase, module: moduleData, isSuperAdmin, email, hasModuleAccess };
 }
@@ -109,7 +117,10 @@ export async function requireEventAccess(locals: App.Locals, moduleId: string, e
 	}
 	if (!event) throw error(404, 'Event not found.');
 
-	const hasEventAccess = access.isSuperAdmin || access.hasModuleAccess || event.email?.trim().toLowerCase() === access.email;
+	const hasEventAccess =
+		access.isSuperAdmin ||
+		access.hasModuleAccess ||
+		event.email?.trim().toLowerCase() === access.email;
 	if (!hasEventAccess) throw error(403, 'You are not authorized to access this event.');
 
 	return { ...access, event };

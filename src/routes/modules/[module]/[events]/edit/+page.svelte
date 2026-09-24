@@ -20,6 +20,7 @@
 	let activeTab = $state('details');
 	let saving = $state(false);
 	let uploadingImage = $state(false);
+	let uploadingDocument = $state(false);
 </script>
 
 <svelte:head>
@@ -265,15 +266,57 @@
 	<!-- DOCUMENTS TAB -->
 	<TabsContent value="documents">
 		<div class="max-w-xl">
-			<div class="mb-4 flex items-center justify-between">
+			<form
+				method="POST"
+				action="?/uploadDocument"
+				enctype="multipart/form-data"
+				class="mb-4 flex items-end justify-between gap-4"
+				use:enhance={() => {
+					uploadingDocument = true;
+					return async ({ update }) => {
+						await update();
+						uploadingDocument = false;
+					};
+				}}
+			>
+				<input type="hidden" name="eventId" value={eventId} />
 				<p class="font-medium">PDF Documents</p>
-				<Button size="sm" class="gap-1.5">
+				<div class="flex items-center gap-2">
+					<Input type="file" name="document" accept="application/pdf,.pdf" required class="w-auto bg-white" />
+					<Button type="submit" size="sm" class="shrink-0 gap-1.5" disabled={uploadingDocument}>
 					<Upload class="size-3.5" /> Upload PDF
-				</Button>
-			</div>
-			<div class="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
-				No documents uploaded yet. (PDF support coming soon!)
-			</div>
+					</Button>
+				</div>
+			</form>
+			{#if event.documents?.length}
+				<div class="space-y-2">
+					{#each event.documents as document}
+						<div class="flex items-center justify-between rounded-lg border p-3">
+							<a href={document.url} target="_blank" rel="noreferrer" class="truncate text-sm underline">
+								{document.name}
+							</a>
+							<form method="POST" action="?/deleteDocument" use:enhance>
+								<input type="hidden" name="eventId" value={eventId} />
+								<input type="hidden" name="publicId" value={document.public_id} />
+								<Button
+									type="submit"
+									variant="destructive"
+									size="sm"
+									onclick={(e) => {
+										if (!confirm(`Delete ${document.name}?`)) e.preventDefault();
+									}}
+								>
+									<Trash2 class="size-3.5" />
+								</Button>
+							</form>
+						</div>
+					{/each}
+				</div>
+			{:else}
+				<div class="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
+					No documents uploaded yet.
+				</div>
+			{/if}
 		</div>
 	</TabsContent>
 </Tabs>

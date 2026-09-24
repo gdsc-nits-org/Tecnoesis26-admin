@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { mockMerchOrders } from '$lib/mock/data';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import {
@@ -13,12 +12,7 @@
 	import Download from '@lucide/svelte/icons/download';
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 
-	const tecnoesisCount = mockMerchOrders.filter((o) => o.type === 'Tecnoesis').length;
-	const sparkCount = mockMerchOrders.filter((o) => o.type === 'Spark').length;
-
-	function handleDownload() {
-		console.log('download merch orders excel');
-	}
+	let { data } = $props();
 </script>
 
 <svelte:head>
@@ -37,7 +31,7 @@
 				All merchandise orders placed by participants.
 			</p>
 		</div>
-		<Button variant="outline" size="sm" onclick={handleDownload} class="mt-8 gap-1.5">
+		<Button href="/merch/export" variant="outline" size="sm" class="mt-8 gap-1.5">
 			<Download class="size-3.5" />
 			Download Excel
 		</Button>
@@ -47,15 +41,15 @@
 	<div class="mb-6 grid grid-cols-3 gap-4">
 		<div class="rounded-lg border p-4">
 			<p class="text-xs text-muted-foreground">Total Orders</p>
-			<p class="mt-1 text-2xl font-bold">{mockMerchOrders.length}</p>
+			<p class="mt-1 text-2xl font-bold">{data.summary.total}</p>
 		</div>
 		<div class="rounded-lg border p-4">
 			<p class="text-xs text-muted-foreground">Tecnoesis</p>
-			<p class="mt-1 text-2xl font-bold">{tecnoesisCount}</p>
+			<p class="mt-1 text-2xl font-bold">{data.summary.tecnoesis}</p>
 		</div>
 		<div class="rounded-lg border p-4">
 			<p class="text-xs text-muted-foreground">Spark</p>
-			<p class="mt-1 text-2xl font-bold">{sparkCount}</p>
+			<p class="mt-1 text-2xl font-bold">{data.summary.spark}</p>
 		</div>
 	</div>
 
@@ -65,29 +59,29 @@
 				<TableRow>
 					<TableHead>Name</TableHead>
 					<TableHead>Email</TableHead>
-					<TableHead>Reg ID</TableHead>
+					<TableHead>Phone</TableHead>
 					<TableHead>Type</TableHead>
 					<TableHead>Size</TableHead>
+					<TableHead>Hostel</TableHead>
 					<TableHead>Ordered</TableHead>
 				</TableRow>
 			</TableHeader>
 			<TableBody>
-				{#each mockMerchOrders as order}
+				{#each data.orders as order}
 					<TableRow>
-						<TableCell class="font-medium">
-							{order.user.firstName}
-							{order.user.lastName}
-						</TableCell>
-						<TableCell class="text-sm text-muted-foreground">{order.user.email}</TableCell>
-						<TableCell class="text-sm text-muted-foreground">{order.user.registrationId}</TableCell>
+						<TableCell class="font-medium">{order.name ?? '-'}</TableCell>
+						<TableCell class="text-sm text-muted-foreground">{order.email ?? '-'}</TableCell>
+						<TableCell class="text-sm text-muted-foreground">{order.phone ?? '-'}</TableCell>
 						<TableCell>
-							<Badge variant={order.type === 'Tecnoesis' ? 'default' : 'secondary'}>
-								{order.type}
-							</Badge>
+							{#if order.tecno}<Badge variant="default">Tecnoesis</Badge>{/if}
+							{#if order.spark}<Badge variant="secondary">Spark</Badge>{/if}
 						</TableCell>
 						<TableCell>{order.size}</TableCell>
 						<TableCell class="text-sm text-muted-foreground">
-							{new Date(order.createdAt).toLocaleDateString('en-IN')}
+							{order.hostel ?? '-'}
+						</TableCell>
+						<TableCell class="text-sm text-muted-foreground">
+							{new Date(order.created_at).toLocaleDateString('en-IN')}
 						</TableCell>
 					</TableRow>
 				{/each}
