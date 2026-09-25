@@ -5,16 +5,20 @@ import { requireModuleAccess } from '$lib/server/admin';
 
 export const actions: Actions = {
 	create: async ({ request, params, locals }) => {
-		const { supabase, hasModuleAccess } = await requireModuleAccess(locals, params.module);
-		if (!hasModuleAccess) return fail(403, { error: 'Only admins with module access can create events.' });
+		const { supabase, module, hasModuleAccess } = await requireModuleAccess(locals, params.module);
+		if (!hasModuleAccess)
+			return fail(403, { error: 'Only admins with module access can create events.' });
 		const moduleId = params.module;
 		const formData = await request.formData();
 
 		const name = formData.get('name') as string;
 		const eventId = String(formData.get('eventId') ?? '').trim();
-		const eventEmail = locals.user?.role === 'super_admin'
-			? String(formData.get('email') ?? '').trim().toLowerCase() || null
-			: null;
+		const eventEmail =
+			locals.user?.role === 'super_admin'
+				? String(formData.get('email') ?? '')
+						.trim()
+						.toLowerCase() || null
+				: null;
 		const description = formData.get('description') as string;
 		const venue = formData.get('venue') as string;
 		const minTeamSize = parseInt(formData.get('minTeamSize') as string) || 1;
@@ -22,6 +26,10 @@ export const actions: Actions = {
 		const registrationEndTime = formData.get('registrationEndTime') as string;
 		const prizeDescription = formData.get('prizeDescription') as string;
 		const stagesDescription = formData.get('stagesDescription') as string;
+		const published =
+			locals.user?.role === 'super_admin' &&
+			module.published === true &&
+			formData.get('published') === 'on';
 
 		// Handle Image Uploads
 		const posterFile = formData.get('poster') as File | null;
@@ -43,7 +51,9 @@ export const actions: Actions = {
 		}
 
 		if (!eventId || !name || !venue || !registrationEndTime) {
-			return fail(400, { error: 'Event route name, name, venue, and registration date are required.' });
+			return fail(400, {
+				error: 'Event route name, name, venue, and registration date are required.'
+			});
 		}
 
 		const { error: dbError } = await supabase.from('events').insert({
@@ -59,7 +69,8 @@ export const actions: Actions = {
 			prize_description: prizeDescription,
 			stages_description: stagesDescription,
 			poster_image: posterImage,
-			banner_image: bannerImage
+			banner_image: bannerImage,
+			published
 		});
 
 		if (dbError) {

@@ -1,6 +1,5 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
-import { getSupabaseAdminClient } from '$lib/supabase';
 import { uploadImageToCloudinary } from '$lib/server/cloudinary';
 import { requireSuperAdmin } from '$lib/server/admin';
 
@@ -11,11 +10,14 @@ export const actions: Actions = {
 
 		const name = String(formData.get('name') ?? '').trim();
 		const moduleId = String(formData.get('moduleId') ?? '').trim();
-		const email = String(formData.get('email') ?? '').trim().toLowerCase();
+		const email = String(formData.get('email') ?? '')
+			.trim()
+			.toLowerCase();
 		const description = String(formData.get('description') ?? '').trim();
 		const thirdPartyUrl = String(formData.get('thirdPartyUrl') ?? '').trim();
 		const adminEditable = formData.get('adminEditable') === 'on';
 		const canCreateEvents = formData.get('canCreateEvents') === 'on';
+		const published = formData.get('published') === 'on';
 
 		if (!name || !moduleId || !email) {
 			return fail(400, { error: 'Name, route name, and admin email are required.' });
@@ -42,7 +44,8 @@ export const actions: Actions = {
 			cover_image: coverImage,
 			third_party_url: thirdPartyUrl || null,
 			admin_editable: adminEditable,
-			can_create_events: canCreateEvents
+			can_create_events: canCreateEvents,
+			published
 		});
 
 		if (dbError) {

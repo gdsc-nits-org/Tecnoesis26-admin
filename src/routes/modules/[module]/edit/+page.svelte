@@ -39,10 +39,14 @@
 	}}
 >
 	{#if form?.error}
-		<div class="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{form.error}</div>
+		<div class="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+			{form.error}
+		</div>
 	{/if}
 	{#if form?.success}
-		<div class="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-700">Saved successfully.</div>
+		<div class="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-700">
+			Saved successfully.
+		</div>
 	{/if}
 
 	<div class="space-y-1.5">
@@ -65,9 +69,18 @@
 	</div>
 	<div class="space-y-1.5">
 		<Label for="thirdPartyUrl">Third Party URL</Label>
-		<Input id="thirdPartyUrl" name="thirdPartyUrl" value={module.third_party_url} placeholder="https://..." />
+		<Input
+			id="thirdPartyUrl"
+			name="thirdPartyUrl"
+			value={module.third_party_url}
+			placeholder="https://..."
+		/>
 	</div>
 	<div class="space-y-3 rounded-lg border p-4">
+		<label class="flex items-center gap-2 text-sm">
+			<input type="checkbox" name="published" checked={module.published === true} />
+			Publish this module
+		</label>
 		<label class="flex items-center gap-2 text-sm">
 			<input type="checkbox" name="adminEditable" checked={module.admin_editable === true} />
 			Allow the assigned admin to edit this module

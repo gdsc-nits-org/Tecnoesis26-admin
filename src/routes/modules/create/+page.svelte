@@ -65,7 +65,13 @@
 	<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 		<div class="space-y-1.5">
 			<Label for="moduleId">Route Name *</Label>
-			<Input id="moduleId" name="moduleId" required pattern="[a-z0-9-]+" placeholder="e.g. technical" />
+			<Input
+				id="moduleId"
+				name="moduleId"
+				required
+				pattern="[a-z0-9-]+"
+				placeholder="e.g. technical"
+			/>
 		</div>
 		<div class="space-y-1.5">
 			<Label for="email">Assigned Admin Email *</Label>
@@ -84,6 +90,10 @@
 	</div>
 
 	<div class="space-y-3 rounded-lg border p-4">
+		<label class="flex items-center gap-2 text-sm">
+			<input type="checkbox" name="published" />
+			Publish this module
+		</label>
 		<label class="flex items-center gap-2 text-sm">
 			<input type="checkbox" name="adminEditable" />
 			Allow the assigned admin to edit this module

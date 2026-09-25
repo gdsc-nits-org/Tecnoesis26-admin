@@ -29,13 +29,24 @@ export const load: PageServerLoad = async ({ locals, params, url }) => {
 export const actions: Actions = {
 	updateDetails: async ({ request, locals, params, url }) => {
 		const formData = await request.formData();
-		const eventId = String(formData.get('eventId') ?? params.events ?? url.searchParams.get('eventId') ?? '');
+		const eventId = String(
+			formData.get('eventId') ?? params.events ?? url.searchParams.get('eventId') ?? ''
+		);
 
 		if (!eventId) return fail(400, { error: 'Event ID missing.' });
-		const { supabase, event } = await requireEventAccess(locals, params.module, eventId);
-		const eventEmail = locals.user?.role === 'super_admin'
-			? String(formData.get('email') ?? '').trim().toLowerCase() || null
-			: event.email;
+		const { supabase, event, module } = await requireEventAccess(locals, params.module, eventId);
+		const eventEmail =
+			locals.user?.role === 'super_admin'
+				? String(formData.get('email') ?? '')
+						.trim()
+						.toLowerCase() || null
+				: event.email;
+		const published =
+			module.published !== true
+				? false
+				: locals.user?.role === 'super_admin'
+					? formData.get('published') === 'on'
+					: event.published;
 
 		const { error } = await supabase
 			.from('events')
@@ -49,7 +60,8 @@ export const actions: Actions = {
 				max_team_size: parseInt(formData.get('maxTeamSize') as string) || 4,
 				registration_end_time: formData.get('registrationEndTime'),
 				prize_description: formData.get('prizeDescription'),
-				stages_description: formData.get('stagesDescription')
+				stages_description: formData.get('stagesDescription'),
+				published
 			})
 			.eq('id', event.id);
 
@@ -63,7 +75,9 @@ export const actions: Actions = {
 
 	updateImage: async ({ request, locals, params, url }) => {
 		const formData = await request.formData();
-		const eventId = String(formData.get('eventId') ?? params.events ?? url.searchParams.get('eventId') ?? '');
+		const eventId = String(
+			formData.get('eventId') ?? params.events ?? url.searchParams.get('eventId') ?? ''
+		);
 		const imageType = formData.get('imageType') as 'banner' | 'poster';
 		const file = formData.get('image') as File;
 
@@ -88,7 +102,9 @@ export const actions: Actions = {
 
 	uploadDocument: async ({ request, locals, params, url }) => {
 		const formData = await request.formData();
-		const eventId = String(formData.get('eventId') ?? params.events ?? url.searchParams.get('eventId') ?? '');
+		const eventId = String(
+			formData.get('eventId') ?? params.events ?? url.searchParams.get('eventId') ?? ''
+		);
 		const file = formData.get('document');
 
 		if (!eventId) return fail(400, { error: 'Event ID missing.' });
@@ -96,7 +112,8 @@ export const actions: Actions = {
 		if (file.type !== 'application/pdf' || !file.name.toLowerCase().endsWith('.pdf')) {
 			return fail(400, { error: 'Only PDF files are allowed.' });
 		}
-		if (file.size > 10 * 1024 * 1024) return fail(400, { error: 'PDF files must be 10 MB or smaller.' });
+		if (file.size > 10 * 1024 * 1024)
+			return fail(400, { error: 'PDF files must be 10 MB or smaller.' });
 
 		const { supabase, event } = await requireEventAccess(locals, params.module, eventId);
 		const documents = getEventDocuments(event.documents);
@@ -106,7 +123,10 @@ export const actions: Actions = {
 			const { error } = await supabase
 				.from('events')
 				.update({
-					documents: [...documents, { name: file.name, url: upload.secureUrl, public_id: upload.publicId }]
+					documents: [
+						...documents,
+						{ name: file.name, url: upload.secureUrl, public_id: upload.publicId }
+					]
 				})
 				.eq('id', event.id);
 
@@ -123,7 +143,9 @@ export const actions: Actions = {
 
 	deleteDocument: async ({ request, locals, params, url }) => {
 		const formData = await request.formData();
-		const eventId = String(formData.get('eventId') ?? params.events ?? url.searchParams.get('eventId') ?? '');
+		const eventId = String(
+			formData.get('eventId') ?? params.events ?? url.searchParams.get('eventId') ?? ''
+		);
 		const publicId = String(formData.get('publicId') ?? '');
 
 		if (!eventId || !publicId) return fail(400, { error: 'Document details missing.' });
@@ -149,12 +171,19 @@ export const actions: Actions = {
 
 	deleteEvent: async ({ request, locals, params, url }) => {
 		const formData = await request.formData();
-		const eventId = String(formData.get('eventId') ?? params.events ?? url.searchParams.get('eventId') ?? '');
+		const eventId = String(
+			formData.get('eventId') ?? params.events ?? url.searchParams.get('eventId') ?? ''
+		);
 		const moduleId = params.module;
 
 		if (!eventId) return fail(400, { error: 'Event ID missing.' });
-		const { supabase, event, hasModuleAccess } = await requireEventAccess(locals, moduleId, eventId);
-		if (!hasModuleAccess) return fail(403, { error: 'Only admins with module access can delete events.' });
+		const { supabase, event, hasModuleAccess } = await requireEventAccess(
+			locals,
+			moduleId,
+			eventId
+		);
+		if (!hasModuleAccess)
+			return fail(403, { error: 'Only admins with module access can delete events.' });
 
 		const { error } = await supabase.from('events').delete().eq('id', event.id);
 

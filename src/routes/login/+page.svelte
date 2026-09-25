@@ -35,7 +35,14 @@
 			>
 				<div class="space-y-1.5">
 					<Label for="email">Email address</Label>
-					<Input id="email" name="email" type="email" bind:value={email} placeholder="you@nits.ac.in" required />
+					<Input
+						id="email"
+						name="email"
+						type="email"
+						bind:value={email}
+						placeholder="you@nits.ac.in"
+						required
+					/>
 				</div>
 				<div class="space-y-1.5">
 					<Label for="password">Password</Label>
@@ -43,7 +50,9 @@
 				</div>
 
 				{#if form?.error}
-					<p class="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{form.error}</p>
+					<p class="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+						{form.error}
+					</p>
 				{/if}
 
 				<Button type="submit" class="w-full" disabled={loading}>
@@ -52,7 +61,9 @@
 			</form>
 
 			<p class="mt-4 text-center text-sm text-muted-foreground">
-				First time here? <a class="font-medium text-foreground underline" href="/register">Register</a>
+				First time here? <a class="font-medium text-foreground underline" href="/register"
+					>Register</a
+				>
 			</p>
 		</div>
 	</div>

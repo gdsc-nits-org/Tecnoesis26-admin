@@ -18,11 +18,15 @@ export const actions: Actions = {
 		}
 		const formData = await request.formData();
 		const moduleId = String(formData.get('moduleId') ?? '').trim();
-		const email = String(formData.get('email') ?? '').trim().toLowerCase();
+		const email = String(formData.get('email') ?? '')
+			.trim()
+			.toLowerCase();
 		const name = String(formData.get('name') ?? '').trim();
 
-		if (!moduleId || !email || !name) return fail(400, { error: 'Name, route name, and email are required.' });
+		if (!moduleId || !email || !name)
+			return fail(400, { error: 'Name, route name, and email are required.' });
 
+		const published = formData.get('published') === 'on';
 		const { error } = await supabase
 			.from('modules')
 			.update({
@@ -32,7 +36,8 @@ export const actions: Actions = {
 				description: String(formData.get('description') ?? '').trim() || null,
 				third_party_url: String(formData.get('thirdPartyUrl') ?? '').trim() || null,
 				admin_editable: formData.get('adminEditable') === 'on',
-				can_create_events: formData.get('canCreateEvents') === 'on'
+				can_create_events: formData.get('canCreateEvents') === 'on',
+				published
 			})
 			.eq('module_id', params.module);
 
@@ -41,15 +46,26 @@ export const actions: Actions = {
 			return fail(500, { error: 'Failed to update module details.' });
 		}
 
+		const eventModuleId = moduleId !== params.module ? moduleId : params.module;
 		if (moduleId !== params.module) {
 			const { error: eventError } = await supabase
 				.from('events')
-				.update({ module_id: moduleId })
+				.update({ module_id: eventModuleId, ...(published ? {} : { published: false }) })
 				.eq('module_id', params.module);
 
 			if (eventError) {
 				console.error('Event module route update failed:', eventError);
 				return fail(500, { error: 'Module updated, but related events could not be moved.' });
+			}
+		} else if (!published) {
+			const { error: eventError } = await supabase
+				.from('events')
+				.update({ published: false })
+				.eq('module_id', params.module);
+
+			if (eventError) {
+				console.error('Event publication update failed:', eventError);
+				return fail(500, { error: 'Module updated, but related events could not be unpublished.' });
 			}
 		}
 

@@ -3,7 +3,13 @@ import { error, redirect } from '@sveltejs/kit';
 import { requireModuleAccess, requireSuperAdmin } from '$lib/server/admin';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
-	const { supabase, module: moduleData, isSuperAdmin, hasModuleAccess, email } = await requireModuleAccess(locals, params.module);
+	const {
+		supabase,
+		module: moduleData,
+		isSuperAdmin,
+		hasModuleAccess,
+		email
+	} = await requireModuleAccess(locals, params.module);
 
 	const { data: events, error: eventsError } = await supabase
 		.from('events')
@@ -16,9 +22,10 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		throw error(500, 'Failed to load module events.');
 	}
 
-	const visibleEvents = isSuperAdmin || hasModuleAccess
-		? events ?? []
-		: (events ?? []).filter((event) => event.email?.trim().toLowerCase() === email);
+	const visibleEvents =
+		isSuperAdmin || hasModuleAccess
+			? (events ?? [])
+			: (events ?? []).filter((event) => event.email?.trim().toLowerCase() === email);
 
 	return {
 		module: moduleData,

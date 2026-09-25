@@ -113,6 +113,13 @@
 		<Textarea id="stagesDescription" name="stagesDescription" rows={3} placeholder="Optional" />
 	</div>
 
+	{#if $page.data.user?.role === 'super_admin'}
+		<label class="flex items-center gap-2 text-sm">
+			<input type="checkbox" name="published" />
+			Publish this event
+		</label>
+	{/if}
+
 	<Separator />
 	<Button type="submit" disabled={submitting}>
 		{submitting ? 'Creating Event...' : 'Create Event'}

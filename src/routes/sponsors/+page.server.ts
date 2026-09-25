@@ -51,7 +51,7 @@ export const actions: Actions = {
 		if (!sponsorName) return fail(400, { error: 'Sponsor name is required.' });
 		if (imageError) return fail(400, { error: imageError });
 
-		let imageUrl = '';
+		let imageUrl: string;
 		try {
 			imageUrl = await uploadSponsorImageToCloudinary(image as File);
 			const { error: insertError } = await getSupabaseAdminClient().from('sponsors').insert({

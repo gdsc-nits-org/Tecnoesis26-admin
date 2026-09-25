@@ -40,19 +40,19 @@
 	<!-- DELETE FORM — eventId as hidden field -->
 	<form method="POST" action="?/deleteEvent" use:enhance>
 		{#if $page.data.user?.role === 'super_admin' || data.hasModuleAccess}
-		<input type="hidden" name="eventId" value={eventId} />
-		<Button
-			type="submit"
-			variant="destructive"
-			size="sm"
-			class="gap-1.5"
-			onclick={(e) => {
-				if (!confirm('Are you sure you want to delete this event?')) e.preventDefault();
-			}}
-		>
-			<Trash2 class="size-3.5" />
-			Delete Event
-		</Button>
+			<input type="hidden" name="eventId" value={eventId} />
+			<Button
+				type="submit"
+				variant="destructive"
+				size="sm"
+				class="gap-1.5"
+				onclick={(e) => {
+					if (!confirm('Are you sure you want to delete this event?')) e.preventDefault();
+				}}
+			>
+				<Trash2 class="size-3.5" />
+				Delete Event
+			</Button>
 		{/if}
 	</form>
 </div>
@@ -95,13 +95,25 @@
 			{#if $page.data.user?.role === 'super_admin'}
 				<div class="space-y-1.5">
 					<Label for="email">Event Access Email</Label>
-					<Input id="email" name="email" type="email" value={event.email ?? ''} placeholder="admin@example.com" />
+					<Input
+						id="email"
+						name="email"
+						type="email"
+						value={event.email ?? ''}
+						placeholder="admin@example.com"
+					/>
 				</div>
 			{/if}
 
 			<div class="space-y-1.5">
 				<Label for="eventRoute">Route Name *</Label>
-				<Input id="eventRoute" name="eventRoute" value={event.event_id} pattern="[a-z0-9-]+" required />
+				<Input
+					id="eventRoute"
+					name="eventRoute"
+					value={event.event_id}
+					pattern="[a-z0-9-]+"
+					required
+				/>
 			</div>
 
 			<div class="space-y-1.5">
@@ -165,6 +177,12 @@
 					rows={3}
 				/>
 			</div>
+			{#if $page.data.user?.role === 'super_admin'}
+				<label class="flex items-center gap-2 text-sm">
+					<input type="checkbox" name="published" checked={event.published === true} />
+					Publish this event
+				</label>
+			{/if}
 			<Separator />
 			<Button type="submit" disabled={saving}>
 				{saving ? 'Saving...' : 'Save Changes'}
@@ -282,9 +300,15 @@
 				<input type="hidden" name="eventId" value={eventId} />
 				<p class="font-medium">PDF Documents</p>
 				<div class="flex items-center gap-2">
-					<Input type="file" name="document" accept="application/pdf,.pdf" required class="w-auto bg-white" />
+					<Input
+						type="file"
+						name="document"
+						accept="application/pdf,.pdf"
+						required
+						class="w-auto bg-white"
+					/>
 					<Button type="submit" size="sm" class="shrink-0 gap-1.5" disabled={uploadingDocument}>
-					<Upload class="size-3.5" /> Upload PDF
+						<Upload class="size-3.5" /> Upload PDF
 					</Button>
 				</div>
 			</form>
@@ -292,7 +316,12 @@
 				<div class="space-y-2">
 					{#each event.documents as document}
 						<div class="flex items-center justify-between rounded-lg border p-3">
-							<a href={document.url} target="_blank" rel="noreferrer" class="truncate text-sm underline">
+							<a
+								href={document.url}
+								target="_blank"
+								rel="noreferrer"
+								class="truncate text-sm underline"
+							>
 								{document.name}
 							</a>
 							<form method="POST" action="?/deleteDocument" use:enhance>

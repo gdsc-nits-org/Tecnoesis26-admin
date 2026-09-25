@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { resolve } from '$app/paths';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
@@ -36,23 +37,48 @@
 			>
 				<div class="space-y-1.5">
 					<Label for="email">Email address</Label>
-					<Input id="email" name="email" type="email" bind:value={email} placeholder="you@nits.ac.in" required />
+					<Input
+						id="email"
+						name="email"
+						type="email"
+						bind:value={email}
+						placeholder="you@nits.ac.in"
+						required
+					/>
 				</div>
 				<div class="space-y-1.5">
 					<Label for="password">Password</Label>
-					<Input id="password" name="password" type="password" minlength={8} maxlength={16} bind:value={password} required />
+					<Input
+						id="password"
+						name="password"
+						type="password"
+						minlength={8}
+						maxlength={16}
+						bind:value={password}
+						required
+					/>
 				</div>
 				<div class="space-y-1.5">
 					<Label for="confirmPassword">Confirm password</Label>
-					<Input id="confirmPassword" name="confirmPassword" type="password" minlength={8} maxlength={16} bind:value={confirmPassword} required />
-					<p class="text-xs text-muted-foreground">8–16 characters with uppercase, lowercase, number, and special character.</p>
+					<Input
+						id="confirmPassword"
+						name="confirmPassword"
+						type="password"
+						minlength={8}
+						maxlength={16}
+						bind:value={confirmPassword}
+						required
+					/>
+					<p class="text-xs text-muted-foreground">
+						8–16 characters with uppercase, lowercase, number, and special character.
+					</p>
 				</div>
 
 				{#if form?.error}
 					<p class="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
 						{form.error}
 						{#if form.error.includes('already registered')}
-							<a class="ml-1 font-medium underline" href="/login">Log in</a>
+							<a class="ml-1 font-medium underline" href={resolve('/login')}>Log in</a>
 						{/if}
 					</p>
 				{/if}
@@ -63,7 +89,10 @@
 			</form>
 
 			<p class="mt-4 text-center text-sm text-muted-foreground">
-				Already registered? <a class="font-medium text-foreground underline" href="/login">Sign in</a>
+				Already registered? <a
+					class="font-medium text-foreground underline"
+					href={resolve('/login')}>Sign in</a
+				>
 			</p>
 		</div>
 	</div>

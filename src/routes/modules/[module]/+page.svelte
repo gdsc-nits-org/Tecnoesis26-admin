@@ -38,21 +38,21 @@
 		{/if}
 		<!-- Delete Module -->
 		{#if isSuperAdmin}
-		<form method="POST" action="?/deleteModule" use:enhance>
-			<Button
-				type="submit"
-				variant="destructive"
-				size="sm"
-				class="gap-1.5"
-				onclick={(e) => {
-					if (!confirm('Delete this module and all its events? This cannot be undone.'))
-						e.preventDefault();
-				}}
-			>
-				<Trash2 class="size-3.5" />
-				Delete Module
-			</Button>
-		</form>
+			<form method="POST" action="?/deleteModule" use:enhance>
+				<Button
+					type="submit"
+					variant="destructive"
+					size="sm"
+					class="gap-1.5"
+					onclick={(e) => {
+						if (!confirm('Delete this module and all its events? This cannot be undone.'))
+							e.preventDefault();
+					}}
+				>
+					<Trash2 class="size-3.5" />
+					Delete Module
+				</Button>
+			</form>
 		{/if}
 
 		<!-- Create Event -->

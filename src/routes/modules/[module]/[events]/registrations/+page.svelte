@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { SvelteSet } from 'svelte/reactivity';
 	import { page } from '$app/stores';
 	import { mockEvents, mockRegistrations } from '$lib/mock/data';
 	import { Button } from '$lib/components/ui/button/index.js';
@@ -30,10 +31,10 @@
 		return 'secondary';
 	}
 
-	let expandedTeams = $state<Set<string>>(new Set());
+	let expandedTeams = new SvelteSet<string>();
 
 	function toggleTeam(teamName: string) {
-		const next = new Set(expandedTeams);
+		const next = new SvelteSet(expandedTeams);
 		if (next.has(teamName)) {
 			next.delete(teamName);
 		} else {
@@ -92,7 +93,7 @@
 				</TableRow>
 			</TableHeader>
 			<TableBody>
-				{#each registrations as reg}
+				{#each registrations as reg (reg.teamName)}
 					<TableRow
 						class="cursor-pointer transition-colors hover:bg-muted/50"
 						onclick={() => toggleTeam(reg.teamName)}
@@ -120,7 +121,7 @@
 						<TableRow class="hover:bg-transparent">
 							<TableCell colspan={4} class="bg-muted/30 px-6 py-4">
 								<div class="flex flex-col gap-2">
-									{#each reg.members as member}
+									{#each reg.members as member (member.registrationId)}
 										<div
 											class="flex items-start gap-3 rounded-lg border bg-white px-4 py-3 shadow-sm"
 										>

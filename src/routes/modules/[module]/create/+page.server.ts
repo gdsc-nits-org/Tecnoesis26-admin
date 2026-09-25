@@ -4,7 +4,7 @@ import { uploadImageToCloudinary } from '$lib/server/cloudinary';
 import { requireModuleAccess } from '$lib/server/admin';
 
 export const actions: Actions = {
-	create: async ({ request, cookies, params, locals }) => {
+	create: async ({ request, params, locals }) => {
 		const { supabase, hasModuleAccess } = await requireModuleAccess(locals, params.module);
 		if (!hasModuleAccess) {
 			return fail(403, { error: 'You are not allowed to create events in this module.' });
@@ -14,9 +14,12 @@ export const actions: Actions = {
 
 		const name = formData.get('name') as string;
 		const eventId = String(formData.get('eventId') ?? '').trim();
-		const eventEmail = locals.user?.role === 'super_admin'
-			? String(formData.get('email') ?? '').trim().toLowerCase() || null
-			: null;
+		const eventEmail =
+			locals.user?.role === 'super_admin'
+				? String(formData.get('email') ?? '')
+						.trim()
+						.toLowerCase() || null
+				: null;
 		const description = formData.get('description') as string;
 		const venue = formData.get('venue') as string;
 		const minTeamSize = parseInt(formData.get('minTeamSize') as string) || 1;
@@ -26,7 +29,9 @@ export const actions: Actions = {
 		const stagesDescription = formData.get('stagesDescription') as string;
 
 		if (!eventId || !name || !venue || !registrationEndTime) {
-			return fail(400, { error: 'Event route name, name, venue, and registration date are required.' });
+			return fail(400, {
+				error: 'Event route name, name, venue, and registration date are required.'
+			});
 		}
 
 		// Handle Image Uploads
