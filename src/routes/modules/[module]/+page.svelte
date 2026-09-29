@@ -16,6 +16,9 @@
 	let moduleId = $derived($page.params.module);
 	let isSuperAdmin = $derived(data.isSuperAdmin);
 	let hasModuleAccess = $derived(data.hasModuleAccess);
+	let canEditModule = $derived(
+		isSuperAdmin || (hasModuleAccess && currentModule?.admin_editable === true)
+	);
 </script>
 
 <svelte:head>
@@ -33,7 +36,7 @@
 	</div>
 
 	<div class="flex items-center gap-2">
-		{#if isSuperAdmin}
+		{#if canEditModule}
 			<Button href="/modules/{moduleId}/edit" variant="outline" size="sm">Edit Module</Button>
 		{/if}
 		<!-- Delete Module -->

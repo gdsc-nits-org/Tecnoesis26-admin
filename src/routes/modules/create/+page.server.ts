@@ -34,8 +34,6 @@ export const actions: Actions = {
 			console.error('Image upload failed:', err);
 			return fail(500, { error: 'Failed to upload image. Check Cloudinary config.' });
 		}
-		if (!coverImage) return fail(400, { error: 'A cover image is required.' });
-
 		const { error: dbError } = await supabase.from('modules').insert({
 			name,
 			module_id: moduleId,

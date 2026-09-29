@@ -1,13 +1,14 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { requireModuleAccess } from '$lib/server/admin';
+import { uploadImageToCloudinary } from '$lib/server/cloudinary';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
-	const { module } = await requireModuleAccess(locals, params.module);
-	if (locals.user?.role !== 'super_admin') {
+	const access = await requireModuleAccess(locals, params.module);
+	if (!access.isSuperAdmin && !(access.hasModuleAccess && access.module.admin_editable === true)) {
 		throw redirect(303, `/modules/${params.module}`);
 	}
-	return { module };
+	return { module: access.module, isSuperAdmin: access.isSuperAdmin };
 };
 
 export const actions: Actions = {
@@ -70,5 +71,42 @@ export const actions: Actions = {
 		}
 
 		return { success: true };
+	},
+
+	updateImage: async ({ request, locals, params }) => {
+		const { supabase, module, isSuperAdmin, hasModuleAccess } = await requireModuleAccess(
+			locals,
+			params.module
+		);
+		if (!isSuperAdmin && !(hasModuleAccess && module.admin_editable === true)) {
+			return fail(403, { error: 'You are not allowed to edit this module.' });
+		}
+
+		const formData = await request.formData();
+		const imageType = formData.get('imageType');
+		const file = formData.get('image');
+		if (imageType !== 'cover') {
+			return fail(400, { error: 'Invalid module image type.' });
+		}
+		if (!(file instanceof File) || file.size === 0) {
+			return fail(400, { error: 'Select an image to upload.' });
+		}
+		if (!file.type.startsWith('image/')) {
+			return fail(400, { error: 'Only image files are allowed.' });
+		}
+
+		try {
+			const imageUrl = await uploadImageToCloudinary(file);
+			const { error } = await supabase
+				.from('modules')
+				.update({ cover_image: imageUrl })
+				.eq('module_id', params.module);
+
+			if (error) throw error;
+			return { imageSuccess: true };
+		} catch (err) {
+			console.error('Module image upload failed:', err);
+			return fail(500, { error: 'Failed to upload and save module image.' });
+		}
 	}
 };

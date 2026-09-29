@@ -11,21 +11,25 @@ export const actions: Actions = {
 		const moduleId = params.module;
 		const formData = await request.formData();
 
-		const name = formData.get('name') as string;
+		const name = String(formData.get('name') ?? '').trim();
 		const eventId = String(formData.get('eventId') ?? '').trim();
-		const eventEmail =
-			locals.user?.role === 'super_admin'
-				? String(formData.get('email') ?? '')
-						.trim()
-						.toLowerCase() || null
-				: null;
-		const description = formData.get('description') as string;
-		const venue = formData.get('venue') as string;
-		const minTeamSize = parseInt(formData.get('minTeamSize') as string) || 1;
-		const maxTeamSize = parseInt(formData.get('maxTeamSize') as string) || 4;
-		const registrationEndTime = formData.get('registrationEndTime') as string;
-		const prizeDescription = formData.get('prizeDescription') as string;
-		const stagesDescription = formData.get('stagesDescription') as string;
+		const isSuperAdmin = locals.user?.role === 'super_admin';
+		const eventEmail = isSuperAdmin
+			? String(formData.get('email') ?? '')
+					.trim()
+					.toLowerCase() || null
+			: null;
+		const description = String(formData.get('description') ?? '').trim();
+		const venue = String(formData.get('venue') ?? '').trim();
+		const minTeamSizeValue = String(formData.get('minTeamSize') ?? '').trim();
+		const maxTeamSizeValue = String(formData.get('maxTeamSize') ?? '').trim();
+		const parsedMinTeamSize = Number.parseInt(minTeamSizeValue, 10);
+		const parsedMaxTeamSize = Number.parseInt(maxTeamSizeValue, 10);
+		const minTeamSize = Number.isNaN(parsedMinTeamSize) ? 1 : parsedMinTeamSize;
+		const maxTeamSize = Number.isNaN(parsedMaxTeamSize) ? 4 : parsedMaxTeamSize;
+		const registrationEndTime = String(formData.get('registrationEndTime') ?? '').trim();
+		const prizeDescription = String(formData.get('prizeDescription') ?? '').trim();
+		const stagesDescription = String(formData.get('stagesDescription') ?? '').trim();
 		const published =
 			locals.user?.role === 'super_admin' &&
 			module.published === true &&
@@ -50,9 +54,30 @@ export const actions: Actions = {
 			return fail(500, { error: 'Failed to upload images to Cloudinary.' });
 		}
 
-		if (!eventId || !name || !venue || !registrationEndTime) {
+		if (!eventId || !name) {
+			return fail(400, { error: 'Event route name and name are required.' });
+		}
+		if (isSuperAdmin && !eventEmail) {
+			return fail(400, { error: 'An admin email is required to give access to this event.' });
+		}
+		if (
+			!isSuperAdmin &&
+			(!description ||
+				!venue ||
+				!minTeamSizeValue ||
+				!maxTeamSizeValue ||
+				!Number.isInteger(parsedMinTeamSize) ||
+				!Number.isInteger(parsedMaxTeamSize) ||
+				parsedMinTeamSize < 1 ||
+				parsedMaxTeamSize < parsedMinTeamSize ||
+				!registrationEndTime ||
+				!prizeDescription ||
+				!stagesDescription ||
+				!(formData.get('poster') as File | null)?.size ||
+				!(formData.get('banner') as File | null)?.size)
+		) {
 			return fail(400, {
-				error: 'Event route name, name, venue, and registration date are required.'
+				error: 'Complete all event details, team sizes, and upload both poster and banner images.'
 			});
 		}
 

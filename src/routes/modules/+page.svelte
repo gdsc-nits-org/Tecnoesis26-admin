@@ -53,13 +53,6 @@
 						class="h-full w-full object-cover transition group-hover:scale-105"
 					/>
 					<div class="absolute inset-0 bg-black/30"></div>
-					<img
-						src={mod.icon_image && !mod.icon_image.startsWith('data:')
-							? mod.icon_image
-							: 'https://placehold.co/100?text=?'}
-						alt=""
-						class="absolute bottom-3 left-3 size-10 rounded-lg border-2 border-white object-cover shadow"
-					/>
 				</div>
 				<div class="p-4">
 					<div class="flex items-start justify-between gap-2">
