@@ -27,7 +27,7 @@ export const actions: Actions = {
 		const parsedMaxTeamSize = Number.parseInt(maxTeamSizeValue, 10);
 		const minTeamSize = Number.isNaN(parsedMinTeamSize) ? 1 : parsedMinTeamSize;
 		const maxTeamSize = Number.isNaN(parsedMaxTeamSize) ? 4 : parsedMaxTeamSize;
-		const registrationEndTime = String(formData.get('registrationEndTime') ?? '').trim();
+		const registrationEndTime = String(formData.get('registrationEndTime') ?? '').trim() || null;
 		const prizeDescription = String(formData.get('prizeDescription') ?? '').trim();
 		const stagesDescription = String(formData.get('stagesDescription') ?? '').trim();
 		const published =
@@ -90,7 +90,7 @@ export const actions: Actions = {
 			venue,
 			min_team_size: minTeamSize,
 			max_team_size: maxTeamSize,
-			registration_end_time: registrationEndTime,
+			registration_end_time: registrationEndTime || null,
 			prize_description: prizeDescription,
 			stages_description: stagesDescription,
 			poster_image: posterImage,
